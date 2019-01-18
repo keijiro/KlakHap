@@ -14,8 +14,6 @@ namespace
 
         Decoder(uint32_t id) : id_(id)
         {
-            readBuffer_.resize(4 * 1024 * 1024);
-            decodeBuffer_.resize(4 * 1024 * 1024);
         }
 
         uint32_t GetID() const
@@ -35,25 +33,48 @@ namespace
             fclose(file_);
         }
 
+        uint8_t ReadVideoTypeField()
+        {
+            // Data offset for the first frame
+            unsigned int size;
+            auto offs = MP4D__frame_offset(&demux_, 0, 0, &size, nullptr, nullptr);
+
+            // Read to a temporary buffer.
+            uint8_t temp;
+            fseek(file_, (long)offs + 3, SEEK_SET);
+            fread(&temp, 1, 1, file_);
+
+            return temp;
+        }
+
         void DecodeFrame(uint32_t index)
         {
+            // Frame data offset
             unsigned int in_size, timestamp, duration;
             auto in_offs = MP4D__frame_offset(&demux_, 0, index, &in_size, &timestamp, &duration);
 
+            // Read buffer lazy allocation
+            if (readBuffer_.size() < in_size) readBuffer_.resize(in_size);
+
+            // Frame data read
             fseek(file_, (long)in_offs, SEEK_SET);
             fread(readBuffer_.data(), in_size, 1, file_);
 
-            unsigned long used;
-            unsigned int format;
+            // Decoded data size calculation
+            auto bpp = GetBppFromTypeField(readBuffer_[3]);
+            auto sd = GetVideoTrack().SampleDescription.video;
+            auto data_size = sd.width * sd.height * bpp / 8;
+            if (decodeBuffer_.size() < data_size) decodeBuffer_.resize(data_size);
 
             mutex_.lock();
 
+            // Hap decoding
+            unsigned int format;
             HapDecode(
                 readBuffer_.data(), in_size, 0,
-                hap_callback, NULL,
-                decodeBuffer_.data(),
-                static_cast<unsigned long>(decodeBuffer_.size()),
-                &used, &format
+                hap_callback, nullptr,
+                decodeBuffer_.data(), static_cast<unsigned long>(data_size),
+                nullptr, &format
             );
 
             mutex_.unlock();
@@ -84,6 +105,19 @@ namespace
         std::vector<uint8_t> decodeBuffer_;
         std::mutex mutex_;
 
+        static size_t GetBppFromTypeField(uint8_t type)
+        {
+            switch (type & 0xf)
+            {
+            case 0xb: return 4; // DXT1
+            case 0xe: return 8; // DXT5
+            case 0xf: return 8; // DXT5
+            case 0xc: return 8; // BC7
+            case 0x1: return 4; // BC4
+            }
+            return 0;
+        }
+
         static void hap_callback(
             HapDecodeWorkFunction work, void* p,
             unsigned int count, void* info
@@ -97,6 +131,24 @@ namespace
     std::map<uint32_t, Decoder> decoderMap_;
     uint32_t decoderCount_;
 
+    uint32_t GetFakeBpp(UnityRenderingExtTextureFormat format)
+    {
+        switch (format)
+        {
+        case kUnityRenderingExtFormatRGBA_DXT1_SRGB:
+        case kUnityRenderingExtFormatRGBA_DXT1_UNorm:
+        case kUnityRenderingExtFormatR_BC4_UNorm:
+        case kUnityRenderingExtFormatR_BC4_SNorm:
+            return 2;
+        case kUnityRenderingExtFormatRGBA_DXT5_SRGB:
+        case kUnityRenderingExtFormatRGBA_DXT5_UNorm:
+        case kUnityRenderingExtFormatRGBA_BC7_SRGB:
+        case kUnityRenderingExtFormatRGBA_BC7_UNorm:
+            return 4;
+        }
+        return 0;
+    }
+
     // Callback for texture update events
     void TextureUpdateCallback(int eventID, void* data)
     {
@@ -109,10 +161,10 @@ namespace
             auto it = decoderMap_.find(params->userData);
             if (it != decoderMap_.end())
             {
-                // Note: It requires a pitch instead of actual texture width. Not sure if it's by design.
-                params->width = ((it->second.GetVideoTrack().SampleDescription.video.width + 3) / 4) * 8;
-                params->height = it->second.GetVideoTrack().SampleDescription.video.height;
-                params->bpp = 1;
+                // WORKAROUND: Unity uses a BPP value to calculate a texture
+                // pitch, so this is not an actual BPP -- just a multiplier
+                // for pitch calculation.
+                params->bpp = GetFakeBpp(params->format);
                 params->texData = const_cast<void*>(it->second.LockDecodeBuffer());
             }
         }
@@ -172,6 +224,12 @@ extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoHeight(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;
     return decoder->GetVideoTrack().SampleDescription.video.height;
+}
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoType(Decoder* decoder)
+{
+    if (decoder == nullptr) return 0;
+    return decoder->ReadVideoTypeField();
 }
 
 extern "C" void UNITY_INTERFACE_EXPORT HapDecodeFrame(Decoder* decoder, int32_t index)

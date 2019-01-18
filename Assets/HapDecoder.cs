@@ -21,6 +21,19 @@ namespace Klak.Hap
         Texture2D _texture;
         CommandBuffer _command;
 
+        static TextureFormat VideoTypeToTextureFormat(int type)
+        {
+            switch (type & 0xf)
+            {
+                case 0xb: return TextureFormat.DXT1;
+                case 0xe: return TextureFormat.DXT5;
+                case 0xf: return TextureFormat.DXT5;
+                case 0xc: return TextureFormat.BC7;
+                case 0x1: return TextureFormat.BC4;
+            }
+            return TextureFormat.DXT1;
+        }
+
         void Start()
         {
             var path = Path.Combine(Application.streamingAssetsPath, _fileName);
@@ -32,7 +45,7 @@ namespace Klak.Hap
             _texture = new Texture2D(
                 HapGetVideoWidth(_hap),
                 HapGetVideoHeight(_hap),
-                TextureFormat.DXT1,
+                VideoTypeToTextureFormat(HapGetVideoType(_hap)),
                 false
             );
 
@@ -53,8 +66,7 @@ namespace Klak.Hap
 
         void Update()
         {
-            var time = 1 - Mathf.Abs(1 - Time.time / 3 % 1 * 2);
-            var index = (int)(time * HapCountFrames(_hap));
+            var index = Time.frameCount % HapCountFrames(_hap);
 
             _decodeFrame = index;
             _decodeRequest.Set();
@@ -98,6 +110,9 @@ namespace Klak.Hap
 
         [DllImport("KlakHap")]
         internal static extern int HapGetVideoHeight(IntPtr context);
+
+        [DllImport("KlakHap")]
+        internal static extern int HapGetVideoType(IntPtr context);
 
         [DllImport("KlakHap")]
         internal static extern void HapDecodeFrame(IntPtr context, int index);
