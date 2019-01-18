@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <map>
 #include <vector>
+#include <mutex>
 #include "mp4demux.h"
 #include "hap.h"
 #include "IUnityRenderingExtensions.h"
@@ -44,6 +45,9 @@ namespace
 
             unsigned long used;
             unsigned int format;
+
+            mutex_.lock();
+
             HapDecode(
                 readBuffer_.data(), in_size, 0,
                 hap_callback, NULL,
@@ -52,7 +56,7 @@ namespace
                 &used, &format
             );
 
-            frameDataSize_ = used;
+            mutex_.unlock();
         }
 
         const MP4D_track_t& GetVideoTrack() const
@@ -60,9 +64,15 @@ namespace
             return demux_.track[0];
         }
 
-        const void* GetDataPointer() const
+        const void* LockDecodeBuffer()
         {
+            mutex_.lock();
             return decodeBuffer_.data();
+        }
+
+        void UnlockDecodeBuffer()
+        {
+            mutex_.unlock();
         }
 
     private:
@@ -72,7 +82,7 @@ namespace
         MP4D_demux_t demux_;
         std::vector<uint8_t> readBuffer_;
         std::vector<uint8_t> decodeBuffer_;
-        size_t frameDataSize_ = 0;
+        std::mutex mutex_;
 
         static void hap_callback(
             HapDecodeWorkFunction work, void* p,
@@ -103,12 +113,15 @@ namespace
                 params->width = ((it->second.GetVideoTrack().SampleDescription.video.width + 3) / 4) * 8;
                 params->height = it->second.GetVideoTrack().SampleDescription.video.height;
                 params->bpp = 1;
-                params->texData = const_cast<void*>(it->second.GetDataPointer());
+                params->texData = const_cast<void*>(it->second.LockDecodeBuffer());
             }
         }
         else if (event == kUnityRenderingExtEventUpdateTextureEndV2)
         {
             // UpdateTextureEnd:
+            auto params = reinterpret_cast<UnityRenderingExtTextureUpdateParamsV2*>(data);
+            auto it = decoderMap_.find(params->userData);
+            if (it != decoderMap_.end()) it->second.UnlockDecodeBuffer();
         }
     }
 }

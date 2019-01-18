@@ -1,5 +1,8 @@
 using System;
+using System.IO;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -7,13 +10,24 @@ namespace Klak.Hap
 {
     class HapDecoder : MonoBehaviour
     {
+        [SerializeField] string _fileName = "Test.mov";
+
         IntPtr _hap;
+        Thread _thread;
+
+        AutoResetEvent _decodeRequest = new AutoResetEvent(false);
+        int _decodeFrame;
+
         Texture2D _texture;
         CommandBuffer _command;
 
         void Start()
         {
-            _hap = HapOpen("Assets\\StreamingAssets\\Test.mov");
+            var path = Path.Combine(Application.streamingAssetsPath, _fileName);
+            _hap = HapOpen(path);
+
+            _thread = new Thread(DecoderThread);
+            _thread.Start();
 
             _texture = new Texture2D(
                 HapGetVideoWidth(_hap),
@@ -27,23 +41,23 @@ namespace Klak.Hap
 
         void OnDestroy()
         {
-            if (_hap != IntPtr.Zero)
-            {
-                HapClose(_hap);
-                _hap = IntPtr.Zero;
-            }
+            _decodeFrame = -1;
+            _decodeRequest.Set();
 
-            Destroy(_texture);
+            _thread.Join();
 
-            _command.Dispose();
+            if (_hap != IntPtr.Zero) HapClose(_hap);
+            if (_texture != null) Destroy(_texture);
+            if (_command != null) _command.Dispose();
         }
 
         void Update()
         {
             var time = 1 - Mathf.Abs(1 - Time.time / 3 % 1 * 2);
             var index = (int)(time * HapCountFrames(_hap));
-            
-            HapDecodeFrame(_hap, index);
+
+            _decodeFrame = index;
+            _decodeRequest.Set();
 
             _command.IssuePluginCustomTextureUpdateV2(
                 HapGetTextureUpdateCallback(), _texture, HapGetID(_hap)
@@ -52,6 +66,16 @@ namespace Klak.Hap
             _command.Clear();
 
             GetComponent<Renderer>().material.mainTexture = _texture;
+        }
+
+        void DecoderThread()
+        {
+            while (true)
+            {
+                _decodeRequest.WaitOne();
+                if (_decodeFrame < 0) break;
+                HapDecodeFrame(_hap, _decodeFrame);
+            }
         }
 
         [DllImport("KlakHap")]
