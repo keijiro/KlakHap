@@ -22,9 +22,9 @@ typedef struct
 }
 DecoderContext;
 
-DecoderContext UNITY_INTERFACE_EXPORT *HapOpen(const char *filepath)
+extern "C" DecoderContext UNITY_INTERFACE_EXPORT *HapOpen(const char *filepath)
 {
-    DecoderContext *context = calloc(1, sizeof(DecoderContext));
+    DecoderContext *context = reinterpret_cast<DecoderContext*>(calloc(1, sizeof(DecoderContext)));
 
     context->read_buffer = malloc(4 * 1024 * 1024);
     context->decode_buffer = malloc(4 * 1024 * 1024);
@@ -35,7 +35,7 @@ DecoderContext UNITY_INTERFACE_EXPORT *HapOpen(const char *filepath)
     return context;
 }
 
-void UNITY_INTERFACE_EXPORT HapClose(DecoderContext *context)
+extern "C" void UNITY_INTERFACE_EXPORT HapClose(DecoderContext *context)
 {
     fclose(context->file);
     free(context->read_buffer);
@@ -43,22 +43,22 @@ void UNITY_INTERFACE_EXPORT HapClose(DecoderContext *context)
     free(context);
 }
 
-int64_t UNITY_INTERFACE_EXPORT HapCountFrames(DecoderContext *context)
+extern "C" int64_t UNITY_INTERFACE_EXPORT HapCountFrames(DecoderContext *context)
 {
     return context->demux.track[0].sample_count;
 }
 
-int32_t UNITY_INTERFACE_EXPORT HapGetVideoWidth(DecoderContext *context)
+extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoWidth(DecoderContext *context)
 {
     return context->demux.track[0].SampleDescription.video.width;
 }
 
-int32_t UNITY_INTERFACE_EXPORT HapGetVideoHeight(DecoderContext *context)
+extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoHeight(DecoderContext *context)
 {
     return context->demux.track[0].SampleDescription.video.height;
 }
 
-void UNITY_INTERFACE_EXPORT HapDecodeFrame(DecoderContext *context, int32_t index)
+extern "C" void UNITY_INTERFACE_EXPORT HapDecodeFrame(DecoderContext *context, int32_t index)
 {
     unsigned int in_size, timestamp, duration;
     mp4d_size_t in_offs = MP4D__frame_offset
@@ -79,12 +79,12 @@ void UNITY_INTERFACE_EXPORT HapDecodeFrame(DecoderContext *context, int32_t inde
     context->decode_size = used;
 }
 
-void UNITY_INTERFACE_EXPORT *HapGetBufferPointer(DecoderContext *context)
+extern "C" void UNITY_INTERFACE_EXPORT *HapGetBufferPointer(DecoderContext *context)
 {
     return context->decode_buffer;
 }
 
-int64_t UNITY_INTERFACE_EXPORT HapGetBufferSize(DecoderContext *context)
+extern "C" int64_t UNITY_INTERFACE_EXPORT HapGetBufferSize(DecoderContext *context)
 {
     return context->decode_size;
 }

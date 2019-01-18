@@ -64,7 +64,7 @@ enum
 /************************************************************************/
 /*      Complete box list (most of them not used here)                  */
 /************************************************************************/
-#define FOUR_CHAR_INT( a, b, c, d ) (((((((unsigned)(a)*256)|(b))*256)|(c))*256)|(d))
+#define FOUR_CHAR_INT( a, b, c, d ) (((((((unsigned)(a)<<8)|(b))<<8)|(c))<<8)|(d))
 enum
 {
     BOX_co64    = FOUR_CHAR_INT( 'c', 'o', '6', '4' ),//ChunkLargeOffsetAtomType

@@ -70,10 +70,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)..\Hap;$(ProjectDir)..\MP4;$(ProjectDir)..\Snappy;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\Hap;$(ProjectDir)..\MP4;$(ProjectDir)..\Snappy;$(ProjectDir)..\Unity;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)..\Hap;$(ProjectDir)..\MP4;$(ProjectDir)..\Snappy;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\Hap;$(ProjectDir)..\MP4;$(ProjectDir)..\Snappy;$(ProjectDir)..\Unity;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -126,7 +126,7 @@
     <ClCompile Include="..\Snappy\snappy-sinksource.cc" />
     <ClCompile Include="..\Snappy\snappy-stubs-internal.cc" />
     <ClCompile Include="..\Snappy\snappy.cc" />
-    <ClCompile Include="..\Source\KlakHap.c" />
+    <ClCompile Include="..\Source\KlakHap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Hap\hap.h" />
@@ -138,7 +138,9 @@
     <ClInclude Include="..\Snappy\snappy-stubs-internal.h" />
     <ClInclude Include="..\Snappy\snappy-stubs-public.h" />
     <ClInclude Include="..\Snappy\snappy.h" />
-    <ClInclude Include="..\Source\IUnityInterface.h" />
+    <ClInclude Include="..\Unity\IUnityGraphics.h" />
+    <ClInclude Include="..\Unity\IUnityInterface.h" />
+    <ClInclude Include="..\Unity\IUnityRenderingExtensions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

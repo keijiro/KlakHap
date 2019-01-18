@@ -31,11 +31,11 @@
     <Filter Include="Header Files\Snappy">
       <UniqueIdentifier>{4832b987-b5a4-4626-a877-b79dcbfde67f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Unity">
+      <UniqueIdentifier>{2a6d8182-6006-4c8c-ab03-07d5d15d0714}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Source\KlakHap.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Hap\hap.c">
       <Filter>Source Files\Hap</Filter>
     </ClCompile>
@@ -53,6 +53,9 @@
     </ClCompile>
     <ClCompile Include="..\Snappy\snappy-stubs-internal.cc">
       <Filter>Source Files\Snappy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\KlakHap.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,8 +86,14 @@
     <ClInclude Include="..\Hap\hap.h">
       <Filter>Header Files\Hap</Filter>
     </ClInclude>
-    <ClInclude Include="..\Source\IUnityInterface.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\Unity\IUnityGraphics.h">
+      <Filter>Header Files\Unity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Unity\IUnityInterface.h">
+      <Filter>Header Files\Unity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Unity\IUnityRenderingExtensions.h">
+      <Filter>Header Files\Unity</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
