@@ -1,8 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Collections;
+using UnityEngine.Rendering;
 
 namespace Klak.Hap
 {
@@ -10,6 +9,7 @@ namespace Klak.Hap
     {
         IntPtr _hap;
         Texture2D _texture;
+        CommandBuffer _command;
 
         void Start()
         {
@@ -21,6 +21,8 @@ namespace Klak.Hap
                 TextureFormat.DXT1,
                 false
             );
+
+            _command = new CommandBuffer();
         }
 
         void OnDestroy()
@@ -32,31 +34,37 @@ namespace Klak.Hap
             }
 
             Destroy(_texture);
+
+            _command.Dispose();
         }
 
-        unsafe void Update()
+        void Update()
         {
             var time = 1 - Mathf.Abs(1 - Time.time / 3 % 1 * 2);
             var index = (int)(time * HapCountFrames(_hap));
             
             HapDecodeFrame(_hap, index);
 
-            var data = new NativeArray<byte>((int)HapGetFrameDataSize(_hap), Allocator.Temp);
-
-            UnsafeUtility.MemCpy
-                (data.GetUnsafePtr(), (void*)HapGetBufferPointer(_hap), data.Length);
-
-            _texture.LoadRawTextureData(data);
-            _texture.Apply();
+            _command.IssuePluginCustomTextureUpdateV2(
+                HapGetTextureUpdateCallback(), _texture, HapGetID(_hap)
+            );
+            Graphics.ExecuteCommandBuffer(_command);
+            _command.Clear();
 
             GetComponent<Renderer>().material.mainTexture = _texture;
         }
+
+        [DllImport("KlakHap")]
+        internal static extern IntPtr HapGetTextureUpdateCallback();
 
         [DllImport("KlakHap")]
         internal static extern IntPtr HapOpen(string filepath);
 
         [DllImport("KlakHap")]
         internal static extern void HapClose(IntPtr context);
+
+        [DllImport("KlakHap")]
+        internal static extern uint HapGetID(IntPtr context);
 
         [DllImport("KlakHap")]
         internal static extern int HapCountFrames(IntPtr context);
@@ -69,11 +77,5 @@ namespace Klak.Hap
 
         [DllImport("KlakHap")]
         internal static extern void HapDecodeFrame(IntPtr context, int index);
-
-        [DllImport("KlakHap")]
-        internal static extern IntPtr HapGetBufferPointer(IntPtr context);
-
-        [DllImport("KlakHap")]
-        internal static extern int HapGetFrameDataSize(IntPtr context);
     }
 }
