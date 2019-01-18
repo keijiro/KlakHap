@@ -41,7 +41,7 @@ namespace Klak.Hap
             
             HapDecodeFrame(_hap, index);
 
-            var data = new NativeArray<byte>((int)HapGetBufferSize(_hap), Allocator.Temp);
+            var data = new NativeArray<byte>((int)HapGetFrameDataSize(_hap), Allocator.Temp);
 
             UnsafeUtility.MemCpy
                 (data.GetUnsafePtr(), (void*)HapGetBufferPointer(_hap), data.Length);
@@ -59,7 +59,7 @@ namespace Klak.Hap
         internal static extern void HapClose(IntPtr context);
 
         [DllImport("KlakHap")]
-        internal static extern long HapCountFrames(IntPtr context);
+        internal static extern int HapCountFrames(IntPtr context);
 
         [DllImport("KlakHap")]
         internal static extern int HapGetVideoWidth(IntPtr context);
@@ -74,6 +74,6 @@ namespace Klak.Hap
         internal static extern IntPtr HapGetBufferPointer(IntPtr context);
 
         [DllImport("KlakHap")]
-        internal static extern long HapGetBufferSize(IntPtr context);
+        internal static extern int HapGetFrameDataSize(IntPtr context);
     }
 }
