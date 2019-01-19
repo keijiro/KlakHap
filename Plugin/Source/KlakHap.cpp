@@ -214,6 +214,15 @@ extern "C" int32_t UNITY_INTERFACE_EXPORT HapCountFrames(Decoder* decoder)
     return decoder->GetVideoTrack().sample_count;
 }
 
+extern "C" double UNITY_INTERFACE_EXPORT HapGetDuration(Decoder* decoder)
+{
+    if (decoder == nullptr) return 0;
+    auto track = decoder->GetVideoTrack();
+    auto dur = static_cast<double>(track.duration_hi);
+    dur = dur * 0x100000000L + track.duration_lo;
+    return dur / track.timescale;
+}
+
 extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoWidth(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;

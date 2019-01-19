@@ -15,6 +15,8 @@ namespace Klak.Hap
         IntPtr _hap;
         Thread _thread;
 
+        float _frameRate;
+
         AutoResetEvent _decodeRequest = new AutoResetEvent(false);
         int _decodeFrame;
 
@@ -38,6 +40,8 @@ namespace Klak.Hap
         {
             var path = Path.Combine(Application.streamingAssetsPath, _fileName);
             _hap = HapOpen(path);
+
+            _frameRate = (float)(HapCountFrames(_hap) / HapGetDuration(_hap));
 
             _thread = new Thread(DecoderThread);
             _thread.Start();
@@ -66,7 +70,8 @@ namespace Klak.Hap
 
         void Update()
         {
-            var index = Time.frameCount % HapCountFrames(_hap);
+            var index = (int)(Time.time * _frameRate) % HapCountFrames(_hap);
+            if (index == _decodeFrame) return;
 
             _decodeFrame = index;
             _decodeRequest.Set();
@@ -104,6 +109,9 @@ namespace Klak.Hap
 
         [DllImport("KlakHap")]
         internal static extern int HapCountFrames(IntPtr context);
+
+        [DllImport("KlakHap")]
+        internal static extern double HapGetDuration(IntPtr context);
 
         [DllImport("KlakHap")]
         internal static extern int HapGetVideoWidth(IntPtr context);
