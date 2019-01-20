@@ -1,14 +1,26 @@
-#include <map>
+#include <unordered_map>
 #include "Decoder.h"
 #include "IUnityRenderingExtensions.h"
 
+using namespace KlakHap;
+
 namespace
 {
-    using namespace KlakHap;
+    #pragma region ID to decorder instance map
 
-    std::map<uint32_t, Decoder> decoderMap_;
-    uint32_t decoderCount_;
+    std::unordered_map<uint32_t, Decoder*> decoderMap_;
 
+    #pragma endregion
+
+    #pragma region Texture update callback implementation
+
+    //
+    // Get a "fake" byte-per-pixel value for a given compression format
+    //
+    // This is a workaround for a problem that Unity incorrectly uses a BPP
+    // value to calculate a texture pitch. We have to give a mutiplier for
+    // it instead of an actual BPP value.
+    //
     uint32_t GetFakeBpp(UnityRenderingExtTextureFormat format)
     {
         switch (format)
@@ -39,11 +51,8 @@ namespace
             auto it = decoderMap_.find(params->userData);
             if (it != decoderMap_.end())
             {
-                // WORKAROUND: Unity uses a BPP value to calculate a texture
-                // pitch, so this is not an actual BPP -- just a multiplier
-                // for pitch calculation.
                 params->bpp = GetFakeBpp(params->format);
-                params->texData = const_cast<void*>(it->second.LockDecodeBuffer());
+                params->texData = const_cast<void*>(it->second->LockDecodeBuffer());
             }
         }
         else if (event == kUnityRenderingExtEventUpdateTextureEndV2)
@@ -51,48 +60,63 @@ namespace
             // UpdateTextureEnd:
             auto params = reinterpret_cast<UnityRenderingExtTextureUpdateParamsV2*>(data);
             auto it = decoderMap_.find(params->userData);
-            if (it != decoderMap_.end()) it->second.UnlockDecodeBuffer();
+            if (it != decoderMap_.end()) it->second->UnlockDecodeBuffer();
         }
     }
+
+    #pragma endregion
 }
 
-extern "C" UnityRenderingEventAndData UNITY_INTERFACE_EXPORT HapGetTextureUpdateCallback()
+#pragma region Plugin common function
+
+extern "C" UnityRenderingEventAndData UNITY_INTERFACE_EXPORT KlakHap_GetTextureUpdateCallback()
 {
     return TextureUpdateCallback;
 }
 
-extern "C" Decoder UNITY_INTERFACE_EXPORT * HapOpen(const char* filepath)
+#pragma endregion
+
+#pragma region ID-instance map functions
+
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_MapInstance(uint32_t id, Decoder* decoder)
 {
-    auto id = ++decoderCount_;
-    auto it = decoderMap_.emplace(id, id).first;
-    if (!it->second.Open(filepath))
-    {
-        decoderMap_.erase(it);
-        return nullptr;
-    }
-    return &it->second;
+    if (decoder != nullptr)
+        decoderMap_[id] = decoder;
+    else
+        decoderMap_.erase(decoderMap_.find(id));
 }
 
-extern "C" void UNITY_INTERFACE_EXPORT HapClose(Decoder* decoder)
+#pragma endregion
+
+#pragma region Allocation/deallocation functions
+
+extern "C" Decoder UNITY_INTERFACE_EXPORT * KlakHap_Open(const char* filepath)
 {
-    if (decoder == nullptr) return;
-    decoder->Close();
-    decoderMap_.erase(decoderMap_.find(decoder->GetID()));
+    return new Decoder(filepath);
 }
 
-extern "C" uint32_t UNITY_INTERFACE_EXPORT HapGetID(Decoder* decoder)
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_Close(Decoder* decoder)
+{
+    if (decoder != nullptr) delete decoder;
+}
+
+#pragma endregion
+
+#pragma region Accessor functions
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_IsValid(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;
-    return decoder->GetID();
+    return decoder->IsValid() ? 1 : 0;
 }
 
-extern "C" int32_t UNITY_INTERFACE_EXPORT HapCountFrames(Decoder* decoder)
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_CountFrames(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;
     return decoder->GetVideoTrack().sample_count;
 }
 
-extern "C" double UNITY_INTERFACE_EXPORT HapGetDuration(Decoder* decoder)
+extern "C" double UNITY_INTERFACE_EXPORT KlakHap_GetDuration(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;
     auto track = decoder->GetVideoTrack();
@@ -101,26 +125,32 @@ extern "C" double UNITY_INTERFACE_EXPORT HapGetDuration(Decoder* decoder)
     return dur / track.timescale;
 }
 
-extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoWidth(Decoder* decoder)
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_GetVideoWidth(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;
     return decoder->GetVideoTrack().SampleDescription.video.width;
 }
 
-extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoHeight(Decoder* decoder)
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_GetVideoHeight(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;
     return decoder->GetVideoTrack().SampleDescription.video.height;
 }
 
-extern "C" int32_t UNITY_INTERFACE_EXPORT HapGetVideoType(Decoder* decoder)
+#pragma endregion
+
+#pragma region Decoding functions
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_AnalyzeVideoType(Decoder* decoder)
 {
     if (decoder == nullptr) return 0;
     return decoder->ReadVideoTypeField();
 }
 
-extern "C" void UNITY_INTERFACE_EXPORT HapDecodeFrame(Decoder* decoder, int32_t index)
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_DecodeFrame(Decoder* decoder, int32_t index)
 {
     if (decoder == nullptr) return;
     decoder->DecodeFrame(index);
 }
+
+#pragma endregion

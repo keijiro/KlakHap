@@ -14,22 +14,20 @@ namespace KlakHap
 
         #pragma region Constructor/destructor
 
-        Decoder(uint32_t id) : id_(id)
+        Decoder(const char* path)
         {
             std::memset(&demux_, 0, sizeof(MP4D_demux_t));
+
+            if (fopen_s(&file_, path, "rb") != 0) return;
+
+            if (MP4D__open(&demux_, file_) == 0)
+            {
+                fclose(file_);
+                file_ = nullptr;
+            }
         }
 
-        #pragma endregion
-
-        #pragma region Basic file operations
-
-        bool Open(const char* path)
-        {
-            if (fopen_s(&file_, path, "rb") != 0) return false;
-            return MP4D__open(&demux_, file_);
-        }
-
-        void Close()
+        ~Decoder()
         {
             MP4D__close(&demux_);
             if (file_ != nullptr) fclose(file_);
@@ -39,9 +37,9 @@ namespace KlakHap
 
         #pragma region Public accessors
 
-        uint32_t GetID() const
+        bool IsValid() const
         {
-            return id_;
+            return file_ != nullptr;
         }
 
         const MP4D_track_t& GetVideoTrack() const
@@ -117,7 +115,6 @@ namespace KlakHap
 
         #pragma region Internal-use members
 
-        uint32_t id_;
         FILE* file_ = nullptr;
         MP4D_demux_t demux_;
         std::vector<uint8_t> readBuffer_;
