@@ -1,13 +1,17 @@
 #pragma once
 
 #include <stdint.h>
-#include <vector>
+#include <algorithm>
+#include <list>
+#include <memory>
 #include <mutex>
+#include <vector>
 #include "mp4demux.h"
 #include "hap.h"
 
 namespace KlakHap
 {
+
     class Decoder
     {
     public:
@@ -25,6 +29,10 @@ namespace KlakHap
                 fclose(file_);
                 file_ = nullptr;
             }
+
+            // Initial entries for read buffer list
+            for (auto i = 0; i < 3; i++)
+                readBufferList_.push_back(std::make_shared<ReadBuffer>());
         }
 
         ~Decoder()
@@ -49,18 +57,18 @@ namespace KlakHap
 
         const void* LockDecodeBuffer()
         {
-            mutex_.lock();
+            decodeBufferLock_.lock();
             return decodeBuffer_.data();
         }
 
         void UnlockDecodeBuffer()
         {
-            mutex_.unlock();
+            decodeBufferLock_.unlock();
         }
 
         #pragma endregion
 
-        #pragma region Decoding methods
+        #pragma region Analysis method
 
         uint8_t ReadVideoTypeField()
         {
@@ -76,37 +84,65 @@ namespace KlakHap
             return temp;
         }
 
-        void DecodeFrame(uint32_t index)
-        {
-            // Frame data offset
-            unsigned int in_size, timestamp, duration;
-            auto in_offs = MP4D__frame_offset(&demux_, 0, index, &in_size, &timestamp, &duration);
+        #pragma endregion
 
-            // Read buffer lazy allocation
-            if (readBuffer_.size() < in_size) readBuffer_.resize(in_size);
+        #pragma region Read buffer operations
+
+        void ReadFrame(int32_t index)
+        {
+            // Do nothing if the specified frame has been already read.
+            if (FindReadBufferEntry(index)) return;
+
+            std::lock_guard<std::mutex> lock(readBufferLock_);
+
+            // Pop out the oldest entry.
+            auto buffer = readBufferList_.front();
+            readBufferList_.pop_front();
+
+            // Frame data offset
+            unsigned int inSize, timestamp, duration;
+            auto inOffs = MP4D__frame_offset(&demux_, 0, index, &inSize, &timestamp, &duration);
 
             // Frame data read
-            fseek(file_, (long)in_offs, SEEK_SET);
-            fread(readBuffer_.data(), in_size, 1, file_);
+            fseek(file_, (long)inOffs, SEEK_SET);
+            buffer->index_ = index;
+            buffer->storage_.resize(inSize);
+            fread(buffer->storage_.data(), inSize, 1, file_);
+
+            // Return the buffer to the buffer list.
+            readBufferList_.push_back(buffer);
+        }
+
+        #pragma endregion
+
+        #pragma region Decoding operations
+
+        void DecodeFrame(int32_t index)
+        {
+            std::lock_guard<std::mutex> readLock(readBufferLock_);
+
+            // Do nothing if the specified frame is not ready.
+            auto rb = FindReadBufferEntry(index);
+            if (!rb) return;
 
             // Decoded data size calculation
-            auto bpp = GetBppFromTypeField(readBuffer_[3]);
+            auto bpp = GetBppFromTypeField(rb->storage_[3]);
             auto sd = GetVideoTrack().SampleDescription.video;
-            auto data_size = sd.width * sd.height * bpp / 8;
-            if (decodeBuffer_.size() < data_size) decodeBuffer_.resize(data_size);
+            auto dataSize = sd.width * sd.height * bpp / 8;
+            if (decodeBuffer_.size() < dataSize) decodeBuffer_.resize(dataSize);
 
-            mutex_.lock();
+            std::lock_guard<std::mutex> decodeLock(decodeBufferLock_);
 
             // Hap decoding
             unsigned int format;
             HapDecode(
-                readBuffer_.data(), in_size, 0,
-                hap_callback, nullptr,
-                decodeBuffer_.data(), static_cast<unsigned long>(data_size),
+                rb->storage_.data(),
+                static_cast<unsigned long>(rb->storage_.size()),
+                0, hap_callback, nullptr,
+                decodeBuffer_.data(),
+                static_cast<unsigned long>(dataSize),
                 nullptr, &format
             );
-
-            mutex_.unlock();
         }
 
         #pragma endregion
@@ -117,9 +153,9 @@ namespace KlakHap
 
         FILE* file_ = nullptr;
         MP4D_demux_t demux_;
-        std::vector<uint8_t> readBuffer_;
+
         std::vector<uint8_t> decodeBuffer_;
-        std::mutex mutex_;
+        std::mutex decodeBufferLock_;
 
         static size_t GetBppFromTypeField(uint8_t type)
         {
@@ -132,6 +168,28 @@ namespace KlakHap
             case 0x1: return 4; // BC4
             }
             return 0;
+        }
+
+        #pragma endregion
+
+        #pragma region Read buffer implementation
+
+        struct ReadBuffer
+        {
+            int32_t index_ = -1;
+            std::vector<uint8_t> storage_;
+        };
+
+        std::list<std::shared_ptr<ReadBuffer>> readBufferList_;
+        std::mutex readBufferLock_;
+
+        std::shared_ptr<ReadBuffer> FindReadBufferEntry(int index)
+        {
+            auto it = std::find_if(
+                readBufferList_.begin(), readBufferList_.end(),
+                [=] (const auto pb) { return pb->index_ == index; }
+            );
+            return it != readBufferList_.end() ? *it : nullptr;
         }
 
         #pragma endregion

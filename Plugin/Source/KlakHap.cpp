@@ -150,6 +150,7 @@ extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_AnalyzeVideoType(Decoder* deco
 extern "C" void UNITY_INTERFACE_EXPORT KlakHap_DecodeFrame(Decoder* decoder, int32_t index)
 {
     if (decoder == nullptr) return;
+    decoder->ReadFrame(index);
     decoder->DecodeFrame(index);
 }
 
