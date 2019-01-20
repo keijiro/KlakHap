@@ -95,5 +95,8 @@
     <ClInclude Include="..\Unity\IUnityRenderingExtensions.h">
       <Filter>Header Files\Unity</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

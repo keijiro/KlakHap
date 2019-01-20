@@ -89,6 +89,7 @@
     <ClInclude Include="..\Snappy\snappy-stubs-internal.h" />
     <ClInclude Include="..\Snappy\snappy-stubs-public.h" />
     <ClInclude Include="..\Snappy\snappy.h" />
+    <ClInclude Include="..\Source\Decoder.h" />
     <ClInclude Include="..\Unity\IUnityGraphics.h" />
     <ClInclude Include="..\Unity\IUnityInterface.h" />
     <ClInclude Include="..\Unity\IUnityRenderingExtensions.h" />
