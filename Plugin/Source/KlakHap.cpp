@@ -1,5 +1,7 @@
 #include <unordered_map>
 #include "Decoder.h"
+#include "Demuxer.h"
+#include "ReadBuffer.h"
 #include "IUnityRenderingExtensions.h"
 
 using namespace KlakHap;
@@ -52,7 +54,7 @@ namespace
             if (it != decoderMap_.end())
             {
                 params->bpp = GetFakeBpp(params->format);
-                params->texData = const_cast<void*>(it->second->LockDecodeBuffer());
+                params->texData = const_cast<void*>(it->second->LockBuffer());
             }
         }
         else if (event == kUnityRenderingExtEventUpdateTextureEndV2)
@@ -60,7 +62,7 @@ namespace
             // UpdateTextureEnd:
             auto params = reinterpret_cast<UnityRenderingExtTextureUpdateParamsV2*>(data);
             auto it = decoderMap_.find(params->userData);
-            if (it != decoderMap_.end()) it->second->UnlockDecodeBuffer();
+            if (it != decoderMap_.end()) it->second->UnlockBuffer();
         }
     }
 
@@ -76,9 +78,92 @@ extern "C" UnityRenderingEventAndData UNITY_INTERFACE_EXPORT KlakHap_GetTextureU
 
 #pragma endregion
 
-#pragma region ID-instance map functions
+#pragma region Read buffer functions
 
-extern "C" void UNITY_INTERFACE_EXPORT KlakHap_MapInstance(uint32_t id, Decoder* decoder)
+extern "C" ReadBuffer UNITY_INTERFACE_EXPORT * KlakHap_CreateReadBuffer()
+{
+    return new ReadBuffer;
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_DestroyReadBuffer(ReadBuffer* buffer)
+{
+    if (buffer != nullptr) delete buffer;
+}
+
+#pragma endregion
+
+#pragma region Demuxer functions
+
+extern "C" Demuxer UNITY_INTERFACE_EXPORT * KlakHap_OpenDemuxer(const char* filepath)
+{
+    return new Demuxer(filepath);
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_CloseDemuxer(Demuxer* demuxer)
+{
+    if (demuxer != nullptr) delete demuxer;
+}
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_DemuxerIsValid(Demuxer* demuxer)
+{
+    if (demuxer == nullptr) return 0;
+    return demuxer->IsValid() ? 1 : 0;
+}
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_CountFrames(Demuxer* demuxer)
+{
+    if (demuxer == nullptr) return 0;
+    return demuxer->GetVideoTrack().sample_count;
+}
+
+extern "C" double UNITY_INTERFACE_EXPORT KlakHap_GetDuration(Demuxer* demuxer)
+{
+    if (demuxer == nullptr) return 0;
+    auto track = demuxer->GetVideoTrack();
+    auto dur = static_cast<double>(track.duration_hi);
+    dur = dur * 0x100000000L + track.duration_lo;
+    return dur / track.timescale;
+}
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_GetVideoWidth(Demuxer* demuxer)
+{
+    if (demuxer == nullptr) return 0;
+    return demuxer->GetVideoTrack().SampleDescription.video.width;
+}
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_GetVideoHeight(Demuxer* demuxer)
+{
+    if (demuxer == nullptr) return 0;
+    return demuxer->GetVideoTrack().SampleDescription.video.height;
+}
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_AnalyzeVideoType(Demuxer* demuxer)
+{
+    if (demuxer == nullptr) return 0;
+    return demuxer->ReadVideoTypeField();
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_ReadFrame(Demuxer* demuxer, int frameNumber, ReadBuffer* buffer)
+{
+    if (demuxer == nullptr || buffer == nullptr) return;
+    return demuxer->ReadFrame(frameNumber, *buffer);
+}
+
+#pragma endregion
+
+#pragma region Decoder functions
+
+extern "C" Decoder UNITY_INTERFACE_EXPORT *KlakHap_CreateDecoder(int width, int height, int typeID)
+{
+    return new Decoder(width, height, typeID);
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_DestroyDecoder(Decoder* decoder)
+{
+    delete decoder;
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_AssignDecoder(uint32_t id, Decoder* decoder)
 {
     if (decoder != nullptr)
         decoderMap_[id] = decoder;
@@ -86,72 +171,10 @@ extern "C" void UNITY_INTERFACE_EXPORT KlakHap_MapInstance(uint32_t id, Decoder*
         decoderMap_.erase(decoderMap_.find(id));
 }
 
-#pragma endregion
-
-#pragma region Allocation/deallocation functions
-
-extern "C" Decoder UNITY_INTERFACE_EXPORT * KlakHap_Open(const char* filepath)
-{
-    return new Decoder(filepath);
-}
-
-extern "C" void UNITY_INTERFACE_EXPORT KlakHap_Close(Decoder* decoder)
-{
-    if (decoder != nullptr) delete decoder;
-}
-
-#pragma endregion
-
-#pragma region Accessor functions
-
-extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_IsValid(Decoder* decoder)
-{
-    if (decoder == nullptr) return 0;
-    return decoder->IsValid() ? 1 : 0;
-}
-
-extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_CountFrames(Decoder* decoder)
-{
-    if (decoder == nullptr) return 0;
-    return decoder->GetVideoTrack().sample_count;
-}
-
-extern "C" double UNITY_INTERFACE_EXPORT KlakHap_GetDuration(Decoder* decoder)
-{
-    if (decoder == nullptr) return 0;
-    auto track = decoder->GetVideoTrack();
-    auto dur = static_cast<double>(track.duration_hi);
-    dur = dur * 0x100000000L + track.duration_lo;
-    return dur / track.timescale;
-}
-
-extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_GetVideoWidth(Decoder* decoder)
-{
-    if (decoder == nullptr) return 0;
-    return decoder->GetVideoTrack().SampleDescription.video.width;
-}
-
-extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_GetVideoHeight(Decoder* decoder)
-{
-    if (decoder == nullptr) return 0;
-    return decoder->GetVideoTrack().SampleDescription.video.height;
-}
-
-#pragma endregion
-
-#pragma region Decoding functions
-
-extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_AnalyzeVideoType(Decoder* decoder)
-{
-    if (decoder == nullptr) return 0;
-    return decoder->ReadVideoTypeField();
-}
-
-extern "C" void UNITY_INTERFACE_EXPORT KlakHap_DecodeFrame(Decoder* decoder, int32_t index)
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_DecodeFrame(Decoder* decoder, const ReadBuffer* input)
 {
     if (decoder == nullptr) return;
-    decoder->ReadFrame(index);
-    decoder->DecodeFrame(index);
+    decoder->DecodeFrame(*input);
 }
 
 #pragma endregion
