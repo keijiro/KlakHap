@@ -25,6 +25,7 @@ namespace Klak.Hap
             // By default, read from the first frame with x1 speed.
             _time = 0;
             _delta = DefaultDelta;
+            _reverse = false;
 
             // Reader thread startup
             _resume = new AutoResetEvent(true);
@@ -72,18 +73,15 @@ namespace Klak.Hap
         public void Reschedule(float time, float delta)
         {
             // Flush out the current contents of the lead queue
-            lock (_leadQueue)
-                lock (_freeQueue)
+            lock (_freeQueue)
+                lock (_leadQueue)
                     while (_leadQueue.Count > 0)
                         _freeQueue.Enqueue(_leadQueue.Dequeue());
 
             // Update the time configurations.
-            _time = time;
-            _delta = delta;
-
-            // The delta value should be larger than the single frame duration.
-            if (Math.Abs(_delta) < DefaultDelta)
-                _delta = DefaultDelta * Math.Sign(_delta);
+            _reverse = delta < 0;
+            _time = _reverse ? (float)_demuxer.Duration - time : time;
+            _delta = Math.Max(Math.Abs(delta), DefaultDelta);
 
             // Notify the changes to the reader thread.
             _resume.Set();
@@ -124,6 +122,7 @@ namespace Klak.Hap
         Queue<ReadBuffer> _freeQueue;
 
         float _time, _delta;
+        bool _reverse;
 
         float DefaultDelta { get {
             return (float)(_demuxer.Duration / _demuxer.FrameCount);
@@ -135,6 +134,8 @@ namespace Klak.Hap
 
         void ReaderThread()
         {
+            var total = (float)_demuxer.Duration;
+
             while (true)
             {
                 _resume.WaitOne();
@@ -146,7 +147,12 @@ namespace Klak.Hap
                     if (_freeQueue.Count == 0) continue;
 
                     var buffer = _freeQueue.Dequeue();
-                    _demuxer.ReadFrameAtTime(_time, buffer);
+
+                    var actualTime = _time % total;
+                    if (_reverse) actualTime = total - actualTime;
+
+                    _demuxer.ReadFrameAtTime(actualTime, buffer);
+                    buffer.Time = _time;
 
                     lock (_leadQueue) _leadQueue.Enqueue(buffer);
                 }

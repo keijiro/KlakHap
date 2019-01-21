@@ -23,8 +23,6 @@ namespace Klak.Hap
         Texture2D _texture;
         CommandBuffer _updateCommand;
 
-        float _time;
-
         #endregion
 
         #region MonoBehaviour implementation
@@ -65,6 +63,8 @@ namespace Klak.Hap
                 KlakHap_GetTextureUpdateCallback(),
                 _texture, _decoder.CallbackID
             );
+
+            _stream.Reschedule((float)_demuxer.Duration, -1.0f / 60);
         }
 
         void OnDestroy()
@@ -94,17 +94,7 @@ namespace Klak.Hap
         void Update()
         {
             if (_demuxer == null) return;
-
-            _time += Time.deltaTime;
-
-            if (_time >= _demuxer.Duration)
-            {
-                _time -= (float)_demuxer.Duration;
-                _stream.Reschedule(_time, 1.0f / 60);
-            }
-
-            _decoder.UpdateTime(_time);
-
+            _decoder.UpdateTime(Time.time);
             Graphics.ExecuteCommandBuffer(_updateCommand);
         }
 
