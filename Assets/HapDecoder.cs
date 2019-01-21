@@ -1,14 +1,12 @@
 using System;
 using System.IO;
-using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Klak.Hap
 {
-    class HapDecoder : MonoBehaviour
+    sealed class HapDecoder : MonoBehaviour
     {
         #region Editable attributes
 
@@ -18,66 +16,14 @@ namespace Klak.Hap
 
         #region Private members
 
-        static uint _instantiationCount;
-
-        IntPtr _demuxer;
-        IntPtr _decoder;
-        uint _decoderID;
-
-        double _duration;
-        int _totalFrames;
+        Demuxer _demuxer;
+        StreamReader _stream;
+        Decoder _decoder;
 
         Texture2D _texture;
         CommandBuffer _updateCommand;
 
-        #endregion
-
-        #region Internal use functions
-
-        static TextureFormat VideoTypeToTextureFormat(int type)
-        {
-            switch (type & 0xf)
-            {
-                case 0xb: return TextureFormat.DXT1;
-                case 0xe: return TextureFormat.DXT5;
-                case 0xf: return TextureFormat.DXT5;
-                case 0xc: return TextureFormat.BC7;
-                case 0x1: return TextureFormat.BC4;
-            }
-            return TextureFormat.DXT1;
-        }
-
-        #endregion
-
-        #region Decoder thread
-
-        Thread _thread;
-        AutoResetEvent _decodeRequest;
-        int _decodeFrame;
-
-        void StartDecoderThread()
-        {
-            _decodeRequest = new AutoResetEvent(false);
-            _decodeFrame = 0;
-
-            _thread = new Thread(DecoderThread);
-            _thread.Start();
-        }
-
-        void DecoderThread()
-        {
-            var buffer = KlakHap_CreateReadBuffer();
-
-            while (true)
-            {
-                _decodeRequest.WaitOne();
-                if (_decodeFrame < 0) break;
-                KlakHap_ReadFrame(_demuxer, _decodeFrame, buffer);
-                KlakHap_DecodeFrame(_decoder, buffer);
-            }
-
-            KlakHap_DestroyReadBuffer(buffer);
-        }
+        float _time;
 
         #endregion
 
@@ -87,31 +33,27 @@ namespace Klak.Hap
         {
             // Demuxer instantiation
             var path = Path.Combine(Application.streamingAssetsPath, _fileName);
-            _demuxer = KlakHap_OpenDemuxer(path);
+            _demuxer = new Demuxer(path);
 
-            if (KlakHap_DemuxerIsValid(_demuxer) == 0)
+            if (!_demuxer.IsValid)
             {
-                // Instantiation failed; Close and stop.
-                KlakHap_CloseDemuxer(_demuxer);
-                _demuxer = IntPtr.Zero;
+                _demuxer.Dispose();
+                _demuxer = null;
                 return;
             }
 
-            // Video properties
-            var width = KlakHap_GetVideoWidth(_demuxer);
-            var height = KlakHap_GetVideoHeight(_demuxer);
-            var typeID = KlakHap_AnalyzeVideoType(_demuxer);
-            _duration = KlakHap_GetDuration(_demuxer);
-            _totalFrames = KlakHap_CountFrames(_demuxer);
+            // Stream reader instantiation
+            _stream = new StreamReader(_demuxer);
 
             // Decoder instantiation
-            _decoder = KlakHap_CreateDecoder(width, height, typeID);
-            _decoderID = ++_instantiationCount;
-            KlakHap_AssignDecoder(_decoderID, _decoder);
+            _decoder = new Decoder(
+                _stream, _demuxer.Width, _demuxer.Height, _demuxer.VideoType
+            );
 
             // Texture initialization
-            var format = VideoTypeToTextureFormat(typeID);
-            _texture = new Texture2D(width, height, format, false);
+            _texture = new Texture2D(
+                _demuxer.Width, _demuxer.Height, _demuxer.TextureFormat, false
+            );
 
             // Replace a renderer texture with our one.
             GetComponent<Renderer>().material.mainTexture = _texture;
@@ -120,54 +62,49 @@ namespace Klak.Hap
             _updateCommand = new CommandBuffer();
             _updateCommand.name = "Klak HAP";
             _updateCommand.IssuePluginCustomTextureUpdateV2(
-                KlakHap_GetTextureUpdateCallback(), _texture, _decoderID
+                KlakHap_GetTextureUpdateCallback(),
+                _texture, _decoder.CallbackID
             );
-
-            // Start a decoder thead; Immediately decodes the first frame.
-            StartDecoderThread();
         }
 
         void OnDestroy()
         {
-            // Decoder thread termination
-            if (_thread != null)
+            if (_decoder != null)
             {
-                _decodeFrame = -1;
-                _decodeRequest.Set();
-                _thread.Join();
+                _decoder.Dispose();
+                _decoder = null;
             }
 
-            // Decoder destruction
-            if (_decoder != IntPtr.Zero)
+            if (_stream != null)
             {
-                KlakHap_AssignDecoder(_decoderID, IntPtr.Zero);
-                KlakHap_DestroyDecoder(_decoder);
+                _stream.Dispose();
+                _stream = null;
             }
 
-            // Demuxer destruction
-            if (_demuxer != IntPtr.Zero) KlakHap_CloseDemuxer(_demuxer);
+            if (_demuxer != null)
+            {
+                _demuxer.Dispose();
+                _demuxer = null;
+            }
 
-            // Misc resources
             if (_texture != null) Destroy(_texture);
             if (_updateCommand != null) _updateCommand.Dispose();
         }
 
         void Update()
         {
-            if (_demuxer == IntPtr.Zero || _decoder == IntPtr.Zero) return;
+            if (_demuxer == null) return;
 
-            // Frame index calculation
-            var index = (int)(Time.time * _totalFrames / _duration);
-            index %= _totalFrames;
+            _time += Time.deltaTime;
 
-            // Do nothing if it's same to the previous frame.
-            if (index == _decodeFrame) return;
+            if (_time >= _demuxer.Duration)
+            {
+                _time -= (float)_demuxer.Duration;
+                _stream.Reschedule(_time, 1.0f / 60);
+            }
 
-            // Decoding request
-            _decodeFrame = index;
-            _decodeRequest.Set();
+            _decoder.UpdateTime(_time);
 
-            // Texture update command execution
             Graphics.ExecuteCommandBuffer(_updateCommand);
         }
 
@@ -177,51 +114,6 @@ namespace Klak.Hap
 
         [DllImport("KlakHap")]
         internal static extern IntPtr KlakHap_GetTextureUpdateCallback();
-
-        [DllImport("KlakHap")]
-        internal static extern IntPtr KlakHap_CreateReadBuffer();
-
-        [DllImport("KlakHap")]
-        internal static extern void KlakHap_DestroyReadBuffer(IntPtr buffer);
-
-        [DllImport("KlakHap")]
-        internal static extern IntPtr KlakHap_OpenDemuxer(string filepath);
-
-        [DllImport("KlakHap")]
-        internal static extern void KlakHap_CloseDemuxer(IntPtr demuxer);
-
-        [DllImport("KlakHap")]
-        internal static extern int KlakHap_DemuxerIsValid(IntPtr demuxer);
-
-        [DllImport("KlakHap")]
-        internal static extern int KlakHap_CountFrames(IntPtr demuxer);
-
-        [DllImport("KlakHap")]
-        internal static extern double KlakHap_GetDuration(IntPtr demuxer);
-
-        [DllImport("KlakHap")]
-        internal static extern int KlakHap_GetVideoWidth(IntPtr demuxer);
-
-        [DllImport("KlakHap")]
-        internal static extern int KlakHap_GetVideoHeight(IntPtr demuxer);
-
-        [DllImport("KlakHap")]
-        internal static extern int KlakHap_AnalyzeVideoType(IntPtr demuxer);
-
-        [DllImport("KlakHap")]
-        internal static extern void KlakHap_ReadFrame(IntPtr demuxer, int frameNumber, IntPtr buffer);
-
-        [DllImport("KlakHap")]
-        internal static extern IntPtr KlakHap_CreateDecoder(int width, int height, int typeID);
-
-        [DllImport("KlakHap")]
-        internal static extern void KlakHap_DestroyDecoder(IntPtr decoder);
-
-        [DllImport("KlakHap")]
-        internal static extern void KlakHap_AssignDecoder(uint id, IntPtr decoder);
-
-        [DllImport("KlakHap")]
-        internal static extern void KlakHap_DecodeFrame(IntPtr decoder, IntPtr input);
 
         #endregion
     }
