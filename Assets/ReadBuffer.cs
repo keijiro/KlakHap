@@ -8,6 +8,7 @@ namespace Klak.Hap
         #region Initialization/finalization
 
         public IntPtr PluginPointer { get { return _plugin; } }
+        public int Index { get; set; }
         public float Time { get; set; }
 
         #endregion
@@ -17,6 +18,8 @@ namespace Klak.Hap
         public ReadBuffer()
         {
             _plugin = KlakHap_CreateReadBuffer();
+            Index = Int32.MaxValue;
+            Time = Single.MaxValue;
         }
 
         public void Dispose()

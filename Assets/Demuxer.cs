@@ -64,11 +64,10 @@ namespace Klak.Hap
 
         #region Public methods
 
-        public void ReadFrameAtTime(float time, ReadBuffer buffer)
+        public void ReadFrame(ReadBuffer buffer, int index, float time)
         {
-            var frameNumber = (int)(time * _frameCount / _duration);
-            frameNumber = Mathf.Clamp(frameNumber, 0, _frameCount - 1);
-            KlakHap_ReadFrame(_plugin, frameNumber, buffer.PluginPointer);
+            KlakHap_ReadFrame(_plugin, index, buffer.PluginPointer);
+            buffer.Index = index;
             buffer.Time = time;
         }
 

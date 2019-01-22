@@ -14,13 +14,13 @@ namespace Klak.Hap
             _demuxer = demuxer;
 
             _leadQueue = new Queue<ReadBuffer>();
-            _freeQueue = new Queue<ReadBuffer>();
+            _freeBuffers = new List<ReadBuffer>();
 
-            // Initial queue entry allocation
-            _freeQueue.Enqueue(new ReadBuffer());
-            _freeQueue.Enqueue(new ReadBuffer());
-            _freeQueue.Enqueue(new ReadBuffer());
-            _freeQueue.Enqueue(new ReadBuffer());
+            // Initial buffer entry allocation
+            _freeBuffers.Add(new ReadBuffer());
+            _freeBuffers.Add(new ReadBuffer());
+            _freeBuffers.Add(new ReadBuffer());
+            _freeBuffers.Add(new ReadBuffer());
 
             // Initial playback settings
             _restart = (time, SafeDelta(delta));
@@ -67,11 +67,11 @@ namespace Klak.Hap
                 _leadQueue = null;
             }
 
-            if (_freeQueue != null)
+            if (_freeBuffers != null)
             {
-                foreach (var rb in _freeQueue) rb.Dispose();
-                _freeQueue.Clear();
-                _freeQueue = null;
+                foreach (var rb in _freeBuffers) rb.Dispose();
+                _freeBuffers.Clear();
+                _freeBuffers = null;
             }
         }
 
@@ -80,7 +80,7 @@ namespace Klak.Hap
             // Restart request
             lock (_restartLock) _restart = (time, SafeDelta(delta));
 
-            // Wait for reset and read on the reader thread.
+            // Wait for reset/read on the reader thread.
             _readEvent.Reset();
             while (_restart != null)
             {
@@ -113,7 +113,7 @@ namespace Klak.Hap
                         if (dif_c < dif_n) break;
 
                         // Free the current frame before replacing it.
-                        _freeQueue.Enqueue(_current);
+                        _freeBuffers.Add(_current);
                     }
 
                     _current = _leadQueue.Dequeue();
@@ -121,9 +121,10 @@ namespace Klak.Hap
                 }
             }
 
-            // Notify the changes to the reader thread.
-            if (changed) _updateEvent.Set();
+            // Poke the reader thread.
+            _updateEvent.Set();
 
+            // Only returns a buffer object when the frame was changed.
             return changed ? _current : null;
         }
 
@@ -140,10 +141,10 @@ namespace Klak.Hap
         AutoResetEvent _readEvent;
         bool _terminate;
 
-        // Read buffer and queue objects
+        // Read buffer objects
         ReadBuffer _current;
         Queue<ReadBuffer> _leadQueue;
-        Queue<ReadBuffer> _freeQueue;
+        List<ReadBuffer> _freeBuffers;
         readonly object _queueLock = new object();
 
         // Restart request
@@ -163,15 +164,17 @@ namespace Klak.Hap
 
         void ReaderThread()
         {
-            // Get initial time settings from the restart request tuple.
+            // Initial time settings from the restart request tuple
             var (time, delta) = _restart.Value;
             _restart = null;
 
-            // Total length of the stream
-            var total = (float)_demuxer.Duration;
+            // Stream attributes
+            var totalTime = (float)_demuxer.Duration;
+            var totalFrames = _demuxer.FrameCount;
 
             while (true)
             {
+                // Synchronization with the parent thread
                 _updateEvent.WaitOne();
                 if (_terminate) break;
 
@@ -179,35 +182,61 @@ namespace Klak.Hap
                 lock (_restartLock) if (_restart != null)
                 {
                     // Flush out the current contents of the lead queue.
-                    lock (_queueLock)
-                        while (_leadQueue.Count > 0)
-                            _freeQueue.Enqueue(_leadQueue.Dequeue());
+                    lock (_queueLock) while (_leadQueue.Count > 0)
+                        _freeBuffers.Add(_leadQueue.Dequeue());
 
-                    // Apply the restart settings.
+                    // Apply the restart request.
                     (time, delta) = _restart.Value;
                     _restart = null;
                 }
 
-                // Allocate a read buffer from freeQueue.
-                ReadBuffer buffer;
+                // Time wrapping
+                var wrappedTime = time % totalTime;
+                if (wrappedTime < 0) wrappedTime += totalTime;
+
+                // Wrapped time -> frame number
+                var frameNumber = (int)(wrappedTime * totalFrames / totalTime);
+
                 lock (_queueLock)
                 {
-                    if (_freeQueue.Count == 0) continue;
-                    buffer = _freeQueue.Dequeue();
+                    // Do nothing if there is no free buffer; It indicates that
+                    // the lead queue is fully filled.
+                    if (_freeBuffers.Count == 0) continue;
+
+                    ReadBuffer buffer = null;
+
+                    // Look for a free buffer that has the same frame number.
+                    foreach (var temp in _freeBuffers)
+                    {
+                        if (temp.Index == frameNumber)
+                        {
+                            buffer = temp;
+                            break;
+                        }
+                    }
+
+                    if (buffer != null)
+                    {
+                        // Reuse the found buffer; Although we can use it
+                        // without reading frame data, the time field should
+                        // be updated to handle wrapping-around hits.
+                        _freeBuffers.Remove(buffer);
+                        buffer.Time = time;
+                    }
+                    else
+                    {
+                        // Allocate a buffer from the free buffer list.
+                        buffer = _freeBuffers[_freeBuffers.Count - 1];
+                        _freeBuffers.RemoveAt(_freeBuffers.Count - 1);
+
+                        // Frame data read
+                        _demuxer.ReadFrame(buffer, frameNumber, time);
+                    }
+
+                    // Push the buffer to the lead queue.
+                    _leadQueue.Enqueue(buffer);
                 }
 
-                // Time wrapping
-                var wrappedTime = time % total;
-                if (wrappedTime < 0) wrappedTime += total;
-
-                // Frame data read
-                _demuxer.ReadFrameAtTime(wrappedTime, buffer);
-
-                // Replace the time field with the unwrapped time value.
-                buffer.Time = time;
-
-                // Push the read data to the leadQueue.
-                lock (_queueLock) _leadQueue.Enqueue(buffer);
                 _readEvent.Set();
 
                 time += delta;
