@@ -72,10 +72,9 @@ namespace Klak.Hap
         public void Restart(float time, float delta)
         {
             // Flush out the current contents of the lead queue.
-            lock (_freeQueue)
-                lock (_leadQueue)
-                    while (_leadQueue.Count > 0)
-                        _freeQueue.Enqueue(_leadQueue.Dequeue());
+            lock (_queueLock)
+                while (_leadQueue.Count > 0)
+                    _freeQueue.Enqueue(_leadQueue.Dequeue());
 
             // Playback time settings
             _time = time;
@@ -87,23 +86,29 @@ namespace Klak.Hap
 
         public ReadBuffer Advance(float time)
         {
-            // Free the current frame.
-            if (_current != null)
+            // There is no slow path in this function, so we prefer holding
+            // the queue lock for the entire function block rather than
+            // acquiring/releasing it for each operation.
+            lock (_queueLock)
             {
-                lock (_freeQueue) _freeQueue.Enqueue(_current);
-                _current = null;
-            }
-
-            // Scan the lead queue and free old frames.
-            lock (_leadQueue) while (_leadQueue.Count > 0)
-            {
-                if (_delta >= 0 ? _leadQueue.Peek().Time >= time :
-                                  _leadQueue.Peek().Time <= time) break;
-
+                // Free the current frame.
                 if (_current != null)
-                    lock (_freeQueue) _freeQueue.Enqueue(_current);
+                {
+                    _freeQueue.Enqueue(_current);
+                    _current = null;
+                }
 
-                _current = _leadQueue.Dequeue();
+                // Scan the lead queue and free old frames.
+                while (_leadQueue.Count > 0)
+                {
+                    var peek = _leadQueue.Peek();
+                    if (_delta >= 0 ? peek.Time >= time :
+                                      peek.Time <= time) break;
+
+                    if (_current != null) _freeQueue.Enqueue(_current);
+
+                    _current = _leadQueue.Dequeue();
+                }
             }
 
             // Notify the changes to the reader thread.
@@ -124,6 +129,7 @@ namespace Klak.Hap
         ReadBuffer _current;
         Queue<ReadBuffer> _leadQueue;
         Queue<ReadBuffer> _freeQueue;
+        readonly object _queueLock = new object();
 
         float _time, _delta;
 
@@ -145,20 +151,20 @@ namespace Klak.Hap
 
                 if (_terminate) break;
 
-                lock (_freeQueue)
+                ReadBuffer buffer;
+                lock (_queueLock)
                 {
                     if (_freeQueue.Count == 0) continue;
-
-                    var buffer = _freeQueue.Dequeue();
-
-                    var actualTime = _time % total;
-                    if (actualTime < 0) actualTime += total;
-
-                    _demuxer.ReadFrameAtTime(actualTime, buffer);
-                    buffer.Time = _time;
-
-                    lock (_leadQueue) _leadQueue.Enqueue(buffer);
+                    buffer = _freeQueue.Dequeue();
                 }
+
+                var actualTime = _time % total;
+                if (actualTime < 0) actualTime += total;
+
+                _demuxer.ReadFrameAtTime(actualTime, buffer);
+                buffer.Time = _time;
+
+                lock (_queueLock) _leadQueue.Enqueue(buffer);
 
                 _time += _delta;
             }
