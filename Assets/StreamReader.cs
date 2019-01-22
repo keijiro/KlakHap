@@ -25,7 +25,6 @@ namespace Klak.Hap
             // By default, read from the first frame with x1 speed.
             _time = 0;
             _delta = DefaultDelta;
-            _reverse = false;
 
             // Reader thread startup
             _resume = new AutoResetEvent(true);
@@ -37,7 +36,7 @@ namespace Klak.Hap
         {
             if (_thread != null)
             {
-                _time = -1;
+                _terminate = true;
                 _resume.Set();
                 _thread.Join();
                 _thread = null;
@@ -72,16 +71,15 @@ namespace Klak.Hap
 
         public void Reschedule(float time, float delta)
         {
-            // Flush out the current contents of the lead queue
+            // Flush out the current contents of the lead queue.
             lock (_freeQueue)
                 lock (_leadQueue)
                     while (_leadQueue.Count > 0)
                         _freeQueue.Enqueue(_leadQueue.Dequeue());
 
-            // Update the time configurations.
-            _reverse = delta < 0;
-            _time = _reverse ? (float)_demuxer.Duration - time : time;
-            _delta = Math.Max(Math.Abs(delta), DefaultDelta);
+            // Playback time settings
+            _time = time;
+            _delta = Math.Max(Math.Abs(delta), DefaultDelta) * Math.Sign(delta);
 
             // Notify the changes to the reader thread.
             _resume.Set();
@@ -97,9 +95,14 @@ namespace Klak.Hap
             }
 
             // Scan the lead queue and free old frames.
-            lock (_leadQueue) while (_leadQueue.Count > 0 && _leadQueue.Peek().Time < time)
+            lock (_leadQueue) while (_leadQueue.Count > 0)
             {
-                if (_current != null) lock (_freeQueue) _freeQueue.Enqueue(_current);
+                if (_delta >= 0 ? _leadQueue.Peek().Time >= time :
+                                  _leadQueue.Peek().Time <= time) break;
+
+                if (_current != null)
+                    lock (_freeQueue) _freeQueue.Enqueue(_current);
+
                 _current = _leadQueue.Dequeue();
             }
 
@@ -115,6 +118,7 @@ namespace Klak.Hap
 
         Thread _thread;
         AutoResetEvent _resume;
+        bool _terminate;
 
         Demuxer _demuxer;
         ReadBuffer _current;
@@ -122,7 +126,6 @@ namespace Klak.Hap
         Queue<ReadBuffer> _freeQueue;
 
         float _time, _delta;
-        bool _reverse;
 
         float DefaultDelta { get {
             return (float)(_demuxer.Duration / _demuxer.FrameCount);
@@ -140,7 +143,7 @@ namespace Klak.Hap
             {
                 _resume.WaitOne();
 
-                if (_time < 0) break;
+                if (_terminate) break;
 
                 lock (_freeQueue)
                 {
@@ -149,7 +152,7 @@ namespace Klak.Hap
                     var buffer = _freeQueue.Dequeue();
 
                     var actualTime = _time % total;
-                    if (_reverse) actualTime = total - actualTime;
+                    if (actualTime < 0) actualTime += total;
 
                     _demuxer.ReadFrameAtTime(actualTime, buffer);
                     buffer.Time = _time;

@@ -30,7 +30,7 @@ namespace Klak.Hap
         {
             if (_thread != null)
             {
-                _time = -1;
+                _terminate = true;
                 _resume.Set();
                 _thread.Join();
                 _thread = null;
@@ -67,6 +67,7 @@ namespace Klak.Hap
 
         Thread _thread;
         AutoResetEvent _resume;
+        bool _terminate;
 
         StreamReader _stream;
         float _time;
@@ -81,7 +82,7 @@ namespace Klak.Hap
             {
                 _resume.WaitOne();
 
-                if (_time < 0) break;
+                if (_terminate) break;
 
                 var buffer = _stream.Advance(_time);
                 if (buffer == null) continue;
