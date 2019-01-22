@@ -98,9 +98,6 @@ namespace Klak.Hap
         {
             if (_demuxer == null) return;
 
-            _time += Time.deltaTime * _appliedSpeed;
-            _decoder.UpdateTime(_time);
-
             // Restart the stream reader when the speed value was changed.
             if (_speed != _appliedSpeed)
             {
@@ -108,7 +105,10 @@ namespace Klak.Hap
                 _appliedSpeed = _speed;
             }
 
+            _decoder.UpdateTime(_time);
             Graphics.ExecuteCommandBuffer(_updateCommand);
+
+            _time += Time.deltaTime * _appliedSpeed;
         }
 
         #endregion

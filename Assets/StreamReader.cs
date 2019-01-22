@@ -26,7 +26,8 @@ namespace Klak.Hap
             _restart = (time, SafeDelta(delta));
 
             // Reader thread startup
-            _resume = new AutoResetEvent(true);
+            _updateEvent = new AutoResetEvent(true);
+            _readEvent = new AutoResetEvent(false);
             _thread = new Thread(ReaderThread);
             _thread.Start();
         }
@@ -36,15 +37,21 @@ namespace Klak.Hap
             if (_thread != null)
             {
                 _terminate = true;
-                _resume.Set();
+                _updateEvent.Set();
                 _thread.Join();
                 _thread = null;
             }
 
-            if (_resume != null)
+            if (_updateEvent != null)
             {
-                _resume.Dispose();
-                _resume = null;
+                _updateEvent.Dispose();
+                _updateEvent = null;
+            }
+
+            if (_readEvent != null)
+            {
+                _readEvent.Dispose();
+                _readEvent = null;
             }
 
             if (_current != null)
@@ -70,8 +77,16 @@ namespace Klak.Hap
 
         public void Restart(float time, float delta)
         {
+            // Restart request
             lock (_restartLock) _restart = (time, SafeDelta(delta));
-            _resume.Set();
+
+            // Wait for reset and read on the reader thread.
+            _readEvent.Reset();
+            while (_restart != null)
+            {
+                _updateEvent.Set();
+                _readEvent.WaitOne();
+            }
         }
 
         public ReadBuffer Advance(float time)
@@ -107,7 +122,7 @@ namespace Klak.Hap
             }
 
             // Notify the changes to the reader thread.
-            if (changed) _resume.Set();
+            if (changed) _updateEvent.Set();
 
             return changed ? _current : null;
         }
@@ -119,9 +134,10 @@ namespace Klak.Hap
         // Assigned demuxer
         Demuxer _demuxer;
 
-        // Thread objects
+        // Thread and synchronization objects
         Thread _thread;
-        AutoResetEvent _resume;
+        AutoResetEvent _updateEvent;
+        AutoResetEvent _readEvent;
         bool _terminate;
 
         // Read buffer and queue objects
@@ -156,7 +172,7 @@ namespace Klak.Hap
 
             while (true)
             {
-                _resume.WaitOne();
+                _updateEvent.WaitOne();
                 if (_terminate) break;
 
                 // Check if there is a restart request.
@@ -192,6 +208,7 @@ namespace Klak.Hap
 
                 // Push the read data to the leadQueue.
                 lock (_queueLock) _leadQueue.Enqueue(buffer);
+                _readEvent.Set();
 
                 time += delta;
             }
