@@ -69,7 +69,7 @@ namespace Klak.Hap
             }
         }
 
-        public void Reschedule(float time, float delta)
+        public void Restart(float time, float delta)
         {
             // Flush out the current contents of the lead queue.
             lock (_freeQueue)

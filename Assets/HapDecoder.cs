@@ -69,7 +69,7 @@ namespace Klak.Hap
             );
 
             // Initial playback settings
-            _stream.Reschedule(_time, _speed / 60);
+            _stream.Restart(_time, _speed / 60);
             _appliedSpeed = _speed;
         }
 
@@ -104,10 +104,10 @@ namespace Klak.Hap
             _time += Time.deltaTime * _appliedSpeed;
             _decoder.UpdateTime(_time);
 
-            // Reschedule the stream reader when the speed value was changed.
+            // Restart the stream reader when the speed value was changed.
             if (_speed != _appliedSpeed)
             {
-                _stream.Reschedule(_time, _speed / 60);
+                _stream.Restart(_time, _speed / 60);
                 _appliedSpeed = _speed;
             }
 
