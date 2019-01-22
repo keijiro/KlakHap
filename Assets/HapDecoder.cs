@@ -45,7 +45,8 @@ namespace Klak.Hap
             }
 
             // Stream reader instantiation
-            _stream = new StreamReader(_demuxer);
+            _stream = new StreamReader(_demuxer, _time, _speed / 60);
+            _appliedSpeed = _speed;
 
             // Decoder instantiation
             _decoder = new Decoder(
@@ -67,10 +68,6 @@ namespace Klak.Hap
                 KlakHap_GetTextureUpdateCallback(),
                 _texture, _decoder.CallbackID
             );
-
-            // Initial playback settings
-            _stream.Restart(_time, _speed / 60);
-            _appliedSpeed = _speed;
         }
 
         void OnDestroy()

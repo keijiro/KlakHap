@@ -9,7 +9,7 @@ namespace Klak.Hap
     {
         #region Public methods
 
-        public StreamReader(Demuxer demuxer)
+        public StreamReader(Demuxer demuxer, float time, float delta)
         {
             _demuxer = demuxer;
 
@@ -22,9 +22,8 @@ namespace Klak.Hap
             _freeQueue.Enqueue(new ReadBuffer());
             _freeQueue.Enqueue(new ReadBuffer());
 
-            // By default, read from the first frame with x1 speed.
-            _time = 0;
-            _delta = DefaultDelta;
+            // Initial playback settings
+            _restart = (time, SafeDelta(delta));
 
             // Reader thread startup
             _resume = new AutoResetEvent(true);
@@ -71,71 +70,76 @@ namespace Klak.Hap
 
         public void Restart(float time, float delta)
         {
-            // Flush out the current contents of the lead queue.
-            lock (_queueLock)
-                while (_leadQueue.Count > 0)
-                    _freeQueue.Enqueue(_leadQueue.Dequeue());
-
-            // Playback time settings
-            _time = time;
-            _delta = Math.Max(Math.Abs(delta), DefaultDelta) * Math.Sign(delta);
-
-            // Notify the changes to the reader thread.
+            lock (_restartLock) _restart = (time, SafeDelta(delta));
             _resume.Set();
         }
 
         public ReadBuffer Advance(float time)
         {
+            var changed = false;
+
             // There is no slow path in this function, so we prefer holding
             // the queue lock for the entire function block rather than
             // acquiring/releasing it for each operation.
             lock (_queueLock)
             {
-                // Free the current frame.
-                if (_current != null)
-                {
-                    _freeQueue.Enqueue(_current);
-                    _current = null;
-                }
-
                 // Scan the lead queue and free old frames.
                 while (_leadQueue.Count > 0)
                 {
                     var peek = _leadQueue.Peek();
-                    if (_delta >= 0 ? peek.Time >= time :
-                                      peek.Time <= time) break;
 
-                    if (_current != null) _freeQueue.Enqueue(_current);
+                    if (_current != null)
+                    {
+                        // Break if the current frame is closer than the
+                        // peeked one.
+                        var dif_c = Math.Abs(_current.Time - time);
+                        var dif_n = Math.Abs(peek.Time - time);
+
+                        if (dif_c < dif_n) break;
+
+                        // Free the current frame before replacing it.
+                        _freeQueue.Enqueue(_current);
+                    }
 
                     _current = _leadQueue.Dequeue();
+                    changed = true;
                 }
             }
 
             // Notify the changes to the reader thread.
-            _resume.Set();
+            if (changed) _resume.Set();
 
-            return _current;
+            return changed ? _current : null;
         }
 
         #endregion
 
         #region Private members
 
+        // Assigned demuxer
+        Demuxer _demuxer;
+
+        // Thread objects
         Thread _thread;
         AutoResetEvent _resume;
         bool _terminate;
 
-        Demuxer _demuxer;
+        // Read buffer and queue objects
         ReadBuffer _current;
         Queue<ReadBuffer> _leadQueue;
         Queue<ReadBuffer> _freeQueue;
         readonly object _queueLock = new object();
 
-        float _time, _delta;
+        // Restart request
+        (float, float)? _restart;
+        readonly object _restartLock = new object();
 
-        float DefaultDelta { get {
-            return (float)(_demuxer.Duration / _demuxer.FrameCount);
-        } }
+        // Used to avoid too small delta time values.
+        float SafeDelta(float delta)
+        {
+            var min = (float)(_demuxer.Duration / _demuxer.FrameCount);
+            return Math.Max(Math.Abs(delta), min) * (delta < 0 ? -1 : 1);
+        }
 
         #endregion
 
@@ -143,14 +147,32 @@ namespace Klak.Hap
 
         void ReaderThread()
         {
+            // Get initial time settings from the restart request tuple.
+            var (time, delta) = _restart.Value;
+            _restart = null;
+
+            // Total length of the stream
             var total = (float)_demuxer.Duration;
 
             while (true)
             {
                 _resume.WaitOne();
-
                 if (_terminate) break;
 
+                // Check if there is a restart request.
+                lock (_restartLock) if (_restart != null)
+                {
+                    // Flush out the current contents of the lead queue.
+                    lock (_queueLock)
+                        while (_leadQueue.Count > 0)
+                            _freeQueue.Enqueue(_leadQueue.Dequeue());
+
+                    // Apply the restart settings.
+                    (time, delta) = _restart.Value;
+                    _restart = null;
+                }
+
+                // Allocate a read buffer from freeQueue.
                 ReadBuffer buffer;
                 lock (_queueLock)
                 {
@@ -158,15 +180,20 @@ namespace Klak.Hap
                     buffer = _freeQueue.Dequeue();
                 }
 
-                var actualTime = _time % total;
-                if (actualTime < 0) actualTime += total;
+                // Time wrapping
+                var wrappedTime = time % total;
+                if (wrappedTime < 0) wrappedTime += total;
 
-                _demuxer.ReadFrameAtTime(actualTime, buffer);
-                buffer.Time = _time;
+                // Frame data read
+                _demuxer.ReadFrameAtTime(wrappedTime, buffer);
 
+                // Replace the time field with the unwrapped time value.
+                buffer.Time = time;
+
+                // Push the read data to the leadQueue.
                 lock (_queueLock) _leadQueue.Enqueue(buffer);
 
-                _time += _delta;
+                time += delta;
             }
         }
 
