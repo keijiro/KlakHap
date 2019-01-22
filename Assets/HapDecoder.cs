@@ -11,6 +11,7 @@ namespace Klak.Hap
         #region Editable attributes
 
         [SerializeField] string _fileName = "Test.mov";
+        [SerializeField] float _time = 0;
         [SerializeField, Range(-10, 10)] float _speed = 1;
 
         #endregion
@@ -24,7 +25,7 @@ namespace Klak.Hap
         Texture2D _texture;
         CommandBuffer _updateCommand;
 
-        float _time;
+        float _playbackTime;
         float _appliedSpeed;
 
         #endregion
@@ -46,6 +47,7 @@ namespace Klak.Hap
 
             // Stream reader instantiation
             _stream = new StreamReader(_demuxer, _time, _speed / 60);
+            _playbackTime = _time;
             _appliedSpeed = _speed;
 
             // Decoder instantiation
@@ -98,10 +100,11 @@ namespace Klak.Hap
         {
             if (_demuxer == null) return;
 
-            // Restart the stream reader when the speed value was changed.
-            if (_speed != _appliedSpeed)
+            // Restart the stream reader when the time/speed were changed.
+            if (_time != _playbackTime || _speed != _appliedSpeed)
             {
                 _stream.Restart(_time, _speed / 60);
+                _playbackTime = _time;
                 _appliedSpeed = _speed;
             }
 
@@ -109,6 +112,7 @@ namespace Klak.Hap
             Graphics.ExecuteCommandBuffer(_updateCommand);
 
             _time += Time.deltaTime * _appliedSpeed;
+            _playbackTime = _time;
         }
 
         #endregion
