@@ -11,6 +11,10 @@ namespace Klak.Hap
         [SerializeField] float _time = 0;
         [SerializeField, Range(-10, 10)] float _speed = 1;
 
+        [SerializeField] RenderTexture _targetTexture;
+        [SerializeField] Renderer _targetRenderer = null;
+        [SerializeField] string _targetMaterialProperty = null;
+
         #endregion
 
         #region Private members
@@ -24,6 +28,9 @@ namespace Klak.Hap
 
         float _playbackTime;
         float _appliedSpeed;
+
+        Material _blitMaterial;
+        MaterialPropertyBlock _propertyBlock;
 
         #endregion
 
@@ -57,9 +64,6 @@ namespace Klak.Hap
                 _demuxer.Width, _demuxer.Height, _demuxer.TextureFormat, false
             );
             _updater = new TextureUpdater(_texture, _decoder.CallbackID);
-
-            // Replace a renderer texture with our one.
-            GetComponent<Renderer>().material.mainTexture = _texture;
         }
 
         void OnDestroy()
@@ -93,6 +97,12 @@ namespace Klak.Hap
                 Destroy(_texture);
                 _texture = null;
             }
+
+            if (_blitMaterial != null)
+            {
+                Destroy(_blitMaterial);
+                _blitMaterial = null;
+            }
         }
 
         void Update()
@@ -112,6 +122,19 @@ namespace Klak.Hap
 
             _time += Time.deltaTime * _appliedSpeed;
             _playbackTime = _time;
+
+            // Renderer override
+            if (_targetRenderer != null)
+            {
+                // Material property block lazy initialization
+                if (_propertyBlock == null)
+                    _propertyBlock = new MaterialPropertyBlock();
+
+                // Read-modify-write
+                _targetRenderer.GetPropertyBlock(_propertyBlock);
+                _propertyBlock.SetTexture(_targetMaterialProperty, _texture);
+                _targetRenderer.SetPropertyBlock(_propertyBlock);
+            }
         }
 
         #endregion

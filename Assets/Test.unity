@@ -146,6 +146,9 @@ MonoBehaviour:
   _fileName: Dowit.mov
   _time: 0
   _speed: 1
+  _targetTexture: {fileID: 0}
+  _targetRenderer: {fileID: 757487801}
+  _targetMaterialProperty: _MainTex
 --- !u!4 &757487800
 Transform:
   m_ObjectHideFlags: 0
@@ -284,6 +287,9 @@ MonoBehaviour:
   _fileName: TrailerQ.mov
   _time: 0
   _speed: 1
+  _targetTexture: {fileID: 0}
+  _targetRenderer: {fileID: 833700145}
+  _targetMaterialProperty: _MainTex
 --- !u!4 &833700148
 Transform:
   m_ObjectHideFlags: 0
