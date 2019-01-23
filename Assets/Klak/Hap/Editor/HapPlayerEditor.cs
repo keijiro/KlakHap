@@ -42,11 +42,13 @@ namespace Klak.Hap
         {
             serializedObject.Update();
 
-            // Source file
-            EditorGUILayout.PropertyField(_filePath);
-            EditorGUILayout.PropertyField(_pathMode);
-
-            EditorGUILayout.Space();
+            if (!Application.isPlaying)
+            {
+                // Source file
+                EditorGUILayout.PropertyField(_filePath);
+                EditorGUILayout.PropertyField(_pathMode);
+                EditorGUILayout.Space();
+            }
 
             // Playback control
             EditorGUILayout.PropertyField(_time);

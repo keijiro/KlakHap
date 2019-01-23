@@ -18,7 +18,7 @@ namespace Klak.Hap
 
         [SerializeField] RenderTexture _targetTexture = null;
         [SerializeField] Renderer _targetRenderer = null;
-        [SerializeField] string _targetMaterialProperty = null;
+        [SerializeField] string _targetMaterialProperty = "_MainTex";
 
         #endregion
 
@@ -56,12 +56,57 @@ namespace Klak.Hap
 
         #endregion
 
+        #region Public methods
+
+        public void Open(string filePath, PathMode pathMode = PathMode.StreamingAssets)
+        {
+            if (_demuxer != null)
+            {
+                Debug.LogError("Stream has already been opened.");
+                return;
+            }
+
+            // File path
+            if (pathMode == PathMode.StreamingAssets)
+                filePath = System.IO.Path.Combine(Application.streamingAssetsPath, filePath);
+
+            // Demuxer instantiation
+            _demuxer = new Demuxer(filePath);
+
+            if (!_demuxer.IsValid)
+            {
+                Debug.LogError("Failed to open stream (" + filePath + ").");
+                _demuxer.Dispose();
+                _demuxer = null;
+                return;
+            }
+
+            // Stream reader instantiation
+            _stream = new StreamReader(_demuxer, _time, _speed / 60);
+            _playbackTime = _time;
+            _appliedSpeed = _speed;
+
+            // Decoder instantiation
+            _decoder = new Decoder(
+                _stream, _demuxer.Width, _demuxer.Height, _demuxer.VideoType
+            );
+
+            // Texture initialization
+            _texture = new Texture2D(
+                _demuxer.Width, _demuxer.Height,
+                Utility.DetermineTextureFormat(_demuxer.VideoType), false
+            );
+            _updater = new TextureUpdater(_texture, _decoder.CallbackID);
+        }
+
+        #endregion
+
         #region Read-only properties
 
-        public int FrameWidth { get { return _demuxer.Width; } }
-        public int FrameHeight { get { return _demuxer.Height; } }
-        public int FrameCount { get { return _demuxer.FrameCount; } }
-        public double StreamDuration { get { return _demuxer.Duration; } }
+        public int frameWidth { get { return _demuxer.Width; } }
+        public int frameHeight { get { return _demuxer.Height; } }
+        public int frameCount { get { return _demuxer.FrameCount; } }
+        public double streamDuration { get { return _demuxer.Duration; } }
 
         #endregion
 
@@ -116,37 +161,8 @@ namespace Klak.Hap
 
         void Start()
         {
-            // File path
-            var path = _filePath;
-            if (_pathMode == PathMode.StreamingAssets)
-                path = System.IO.Path.Combine(Application.streamingAssetsPath, path);
-
-            // Demuxer instantiation
-            _demuxer = new Demuxer(path);
-
-            if (!_demuxer.IsValid)
-            {
-                _demuxer.Dispose();
-                _demuxer = null;
-                return;
-            }
-
-            // Stream reader instantiation
-            _stream = new StreamReader(_demuxer, _time, _speed / 60);
-            _playbackTime = _time;
-            _appliedSpeed = _speed;
-
-            // Decoder instantiation
-            _decoder = new Decoder(
-                _stream, _demuxer.Width, _demuxer.Height, _demuxer.VideoType
-            );
-
-            // Texture initialization
-            _texture = new Texture2D(
-                _demuxer.Width, _demuxer.Height,
-                Utility.DetermineTextureFormat(_demuxer.VideoType), false
-            );
-            _updater = new TextureUpdater(_texture, _decoder.CallbackID);
+            if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
+                Open(_filePath, _pathMode);
         }
 
         void OnDestroy()
