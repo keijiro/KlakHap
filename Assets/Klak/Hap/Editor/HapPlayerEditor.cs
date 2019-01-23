@@ -12,6 +12,7 @@ namespace Klak.Hap
 
         SerializedProperty _time;
         SerializedProperty _speed;
+        SerializedProperty _looping;
 
         SerializedProperty _targetTexture;
         SerializedProperty _targetRenderer;
@@ -30,6 +31,7 @@ namespace Klak.Hap
 
             _time = serializedObject.FindProperty("_time");
             _speed = serializedObject.FindProperty("_speed");
+            _looping = serializedObject.FindProperty("_looping");
 
             _targetTexture = serializedObject.FindProperty("_targetTexture");
             _targetRenderer = serializedObject.FindProperty("_targetRenderer");
@@ -49,6 +51,7 @@ namespace Klak.Hap
             // Playback control
             EditorGUILayout.PropertyField(_time);
             EditorGUILayout.PropertyField(_speed);
+            EditorGUILayout.PropertyField(_looping);
 
             EditorGUILayout.Space();
 

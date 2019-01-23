@@ -14,6 +14,7 @@ namespace Klak.Hap
 
         [SerializeField] float _time = 0;
         [SerializeField, Range(-10, 10)] float _speed = 1;
+        [SerializeField] bool _looping = true;
 
         [SerializeField] RenderTexture _targetTexture = null;
         [SerializeField] Renderer _targetRenderer = null;
@@ -33,6 +34,11 @@ namespace Klak.Hap
             set { _speed = value; }
         }
 
+        public bool looping {
+            get { return _looping; }
+            set { _looping = value; }
+        }
+
         public RenderTexture targetTexture {
             get { return _targetTexture; }
             set { _targetTexture = value; }
@@ -47,6 +53,15 @@ namespace Klak.Hap
             get { return _targetMaterialProperty; }
             set { _targetMaterialProperty = value; }
         }
+
+        #endregion
+
+        #region Read-only properties
+
+        public int FrameWidth { get { return _demuxer.Width; } }
+        public int FrameHeight { get { return _demuxer.Height; } }
+        public int FrameCount { get { return _demuxer.FrameCount; } }
+        public double StreamDuration { get { return _demuxer.Duration; } }
 
         #endregion
 
@@ -191,6 +206,7 @@ namespace Klak.Hap
 
             // Time advance
             _time += Time.deltaTime * _appliedSpeed;
+            if (!_looping) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
             _playbackTime = _time;
 
             // External object updates

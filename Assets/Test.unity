@@ -147,6 +147,7 @@ MonoBehaviour:
   _filePath: Dowit.mov
   _time: 0
   _speed: 1
+  _looping: 1
   _targetTexture: {fileID: 0}
   _targetRenderer: {fileID: 757487801}
   _targetMaterialProperty: _MainTex
@@ -289,6 +290,7 @@ MonoBehaviour:
   _filePath: TrailerQ.mov
   _time: 0
   _speed: 1
+  _looping: 1
   _targetTexture: {fileID: 8400000, guid: a8a702a1735e8eb4e8d08ded26055319, type: 2}
   _targetRenderer: {fileID: 833700145}
   _targetMaterialProperty: _MainTex
