@@ -4,6 +4,17 @@ namespace Klak.Hap
 {
     internal static class Utility
     {
+        public static CodecType DetermineCodecType(int videoType)
+        {
+            switch (videoType & 0xf)
+            {
+                case 0xb: return CodecType.Hap;
+                case 0xe: return CodecType.HapAlpha;
+                case 0xf: return CodecType.HapQ;
+            }
+            return CodecType.Unsupported;
+        }
+
         public static TextureFormat DetermineTextureFormat(int videoType)
         {
             switch (videoType & 0xf)

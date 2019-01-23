@@ -18,6 +18,27 @@ namespace Klak.Hap
         SerializedProperty _targetRenderer;
         SerializedProperty _targetMaterialProperty;
 
+        string _sourceInfo;
+
+        public string SourceInfo { get {
+            if (_sourceInfo != null) return _sourceInfo;
+
+            var player = (HapPlayer)target;
+            _sourceInfo = string.Format(
+                "{0}\n" +
+                "Codec: {1}\n" +
+                "Frame dimensions: {2} x {3}\n" +
+                "Stream duration: {4:0.00}\n" +
+                "Frame rate: {5:0.00}",
+                player.resolvedFilePath, player.codecType,
+                player.frameWidth, player.frameHeight,
+                player.streamDuration,
+                player.frameCount / player.streamDuration
+            );
+
+            return _sourceInfo;
+        } }
+        
         static class Labels
         {
             public static readonly GUIContent Property = new GUIContent("Property");
@@ -47,15 +68,16 @@ namespace Klak.Hap
                 // Source file
                 EditorGUILayout.PropertyField(_filePath);
                 EditorGUILayout.PropertyField(_pathMode);
-                EditorGUILayout.Space();
+            }
+            else if (targets.Length == 1)
+            {
+                EditorGUILayout.HelpBox(SourceInfo, MessageType.None);
             }
 
             // Playback control
             EditorGUILayout.PropertyField(_time);
             EditorGUILayout.PropertyField(_speed);
             EditorGUILayout.PropertyField(_looping);
-
-            EditorGUILayout.Space();
 
             // Target texture/renderer
             EditorGUILayout.PropertyField(_targetTexture);

@@ -56,6 +56,26 @@ namespace Klak.Hap
 
         #endregion
 
+        #region Read-only properties
+
+        public int frameWidth { get { return _demuxer?.Width ?? 0; } }
+        public int frameHeight { get { return _demuxer?.Height ?? 0; } }
+        public int frameCount { get { return _demuxer?.FrameCount ?? 0; } }
+        public double streamDuration { get { return _demuxer?.Duration ?? 0; } }
+
+        public CodecType codecType { get {
+            return Utility.DetermineCodecType(_demuxer?.VideoType ?? 0);
+        } }
+
+        public string resolvedFilePath { get {
+            if (_pathMode == PathMode.StreamingAssets)
+                return System.IO.Path.Combine(Application.streamingAssetsPath, _filePath);
+            else
+                return _filePath;
+        } }
+
+        #endregion
+
         #region Public methods
 
         public void Open(string filePath, PathMode pathMode = PathMode.StreamingAssets)
@@ -66,16 +86,34 @@ namespace Klak.Hap
                 return;
             }
 
-            // File path
-            if (pathMode == PathMode.StreamingAssets)
-                filePath = System.IO.Path.Combine(Application.streamingAssetsPath, filePath);
+            _filePath = filePath;
+            _pathMode = pathMode;
 
+            OpenInternal();
+        }
+
+        #endregion
+
+        #region Private members
+
+        Demuxer _demuxer;
+        StreamReader _stream;
+        Decoder _decoder;
+
+        Texture2D _texture;
+        TextureUpdater _updater;
+
+        float _playbackTime;
+        float _appliedSpeed;
+
+        void OpenInternal()
+        {
             // Demuxer instantiation
-            _demuxer = new Demuxer(filePath);
+            _demuxer = new Demuxer(resolvedFilePath);
 
             if (!_demuxer.IsValid)
             {
-                Debug.LogError("Failed to open stream (" + filePath + ").");
+                Debug.LogError("Failed to open stream (" + resolvedFilePath + ").");
                 _demuxer.Dispose();
                 _demuxer = null;
                 return;
@@ -98,29 +136,6 @@ namespace Klak.Hap
             );
             _updater = new TextureUpdater(_texture, _decoder.CallbackID);
         }
-
-        #endregion
-
-        #region Read-only properties
-
-        public int frameWidth { get { return _demuxer.Width; } }
-        public int frameHeight { get { return _demuxer.Height; } }
-        public int frameCount { get { return _demuxer.FrameCount; } }
-        public double streamDuration { get { return _demuxer.Duration; } }
-
-        #endregion
-
-        #region Private members
-
-        Demuxer _demuxer;
-        StreamReader _stream;
-        Decoder _decoder;
-
-        Texture2D _texture;
-        TextureUpdater _updater;
-
-        float _playbackTime;
-        float _appliedSpeed;
 
         #endregion
 
@@ -162,7 +177,7 @@ namespace Klak.Hap
         void Start()
         {
             if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
-                Open(_filePath, _pathMode);
+                OpenInternal();
         }
 
         void OnDestroy()
