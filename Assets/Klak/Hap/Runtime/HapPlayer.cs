@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace Klak.Hap
 {
-    sealed class HapPlayer : MonoBehaviour
+    [AddComponentMenu("Klak/HAP/HAP Player")]
+    public sealed class HapPlayer : MonoBehaviour
     {
         #region Editable attributes
 
