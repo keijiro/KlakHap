@@ -1,12 +1,8 @@
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace Klak.Hap
 {
-    sealed class HapDecoder : MonoBehaviour
+    sealed class HapPlayer : MonoBehaviour
     {
         #region Editable attributes
 
@@ -21,9 +17,9 @@ namespace Klak.Hap
         Demuxer _demuxer;
         StreamReader _stream;
         Decoder _decoder;
+        TextureUpdater _updater;
 
         Texture2D _texture;
-        CommandBuffer _updateCommand;
 
         float _playbackTime;
         float _appliedSpeed;
@@ -35,7 +31,7 @@ namespace Klak.Hap
         void Start()
         {
             // Demuxer instantiation
-            var path = Path.Combine(Application.streamingAssetsPath, _fileName);
+            var path = System.IO.Path.Combine(Application.streamingAssetsPath, _fileName);
             _demuxer = new Demuxer(path);
 
             if (!_demuxer.IsValid)
@@ -59,21 +55,20 @@ namespace Klak.Hap
             _texture = new Texture2D(
                 _demuxer.Width, _demuxer.Height, _demuxer.TextureFormat, false
             );
+            _updater = new TextureUpdater(_texture, _decoder.CallbackID);
 
             // Replace a renderer texture with our one.
             GetComponent<Renderer>().material.mainTexture = _texture;
-
-            // Command buffer initialization
-            _updateCommand = new CommandBuffer();
-            _updateCommand.name = "Klak HAP";
-            _updateCommand.IssuePluginCustomTextureUpdateV2(
-                KlakHap_GetTextureUpdateCallback(),
-                _texture, _decoder.CallbackID
-            );
         }
 
         void OnDestroy()
         {
+            if (_updater != null)
+            {
+                _updater.Dispose();
+                _updater = null;
+            }
+
             if (_decoder != null)
             {
                 _decoder.Dispose();
@@ -92,8 +87,11 @@ namespace Klak.Hap
                 _demuxer = null;
             }
 
-            if (_texture != null) Destroy(_texture);
-            if (_updateCommand != null) _updateCommand.Dispose();
+            if (_texture != null)
+            {
+                Destroy(_texture);
+                _texture = null;
+            }
         }
 
         void Update()
@@ -109,18 +107,11 @@ namespace Klak.Hap
             }
 
             _decoder.UpdateTime(_time);
-            Graphics.ExecuteCommandBuffer(_updateCommand);
+            _updater.RequestUpdate();
 
             _time += Time.deltaTime * _appliedSpeed;
             _playbackTime = _time;
         }
-
-        #endregion
-
-        #region Native plugin entry points
-
-        [DllImport("KlakHap")]
-        internal static extern IntPtr KlakHap_GetTextureUpdateCallback();
 
         #endregion
     }
