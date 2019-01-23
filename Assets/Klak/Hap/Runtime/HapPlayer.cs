@@ -7,13 +7,46 @@ namespace Klak.Hap
     {
         #region Editable attributes
 
-        [SerializeField] string _fileName = "Test.mov";
+        public enum PathMode { StreamingAssets, LocalFileSystem }
+
+        [SerializeField] PathMode _pathMode = PathMode.StreamingAssets;
+        [SerializeField] string _filePath = "";
+
         [SerializeField] float _time = 0;
         [SerializeField, Range(-10, 10)] float _speed = 1;
 
         [SerializeField] RenderTexture _targetTexture = null;
         [SerializeField] Renderer _targetRenderer = null;
         [SerializeField] string _targetMaterialProperty = null;
+
+        #endregion
+
+        #region Public properties
+
+        public float time {
+            get { return _time; }
+            set { _time = value; }
+        }
+
+        public float speed {
+            get { return _speed; }
+            set { _speed = value; }
+        }
+
+        public RenderTexture targetTexture {
+            get { return _targetTexture; }
+            set { _targetTexture = value; }
+        }
+
+        public Renderer targetRenderer {
+            get { return _targetRenderer; }
+            set { _targetRenderer = value; }
+        }
+
+        public string targetMaterialProperty {
+            get { return _targetMaterialProperty; }
+            set { _targetMaterialProperty = value; }
+        }
 
         #endregion
 
@@ -68,8 +101,12 @@ namespace Klak.Hap
 
         void Start()
         {
+            // File path
+            var path = _filePath;
+            if (_pathMode == PathMode.StreamingAssets)
+                path = System.IO.Path.Combine(Application.streamingAssetsPath, path);
+
             // Demuxer instantiation
-            var path = System.IO.Path.Combine(Application.streamingAssetsPath, _fileName);
             _demuxer = new Demuxer(path);
 
             if (!_demuxer.IsValid)

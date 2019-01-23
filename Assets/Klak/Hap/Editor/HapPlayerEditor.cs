@@ -7,7 +7,8 @@ namespace Klak.Hap
     [CustomEditor(typeof(HapPlayer))]
     sealed class HapPlayerEditor : Editor
     {
-        SerializedProperty _fileName;
+        SerializedProperty _filePath;
+        SerializedProperty _pathMode;
 
         SerializedProperty _time;
         SerializedProperty _speed;
@@ -24,7 +25,8 @@ namespace Klak.Hap
 
         void OnEnable()
         {
-            _fileName = serializedObject.FindProperty("_fileName");
+            _filePath = serializedObject.FindProperty("_filePath");
+            _pathMode = serializedObject.FindProperty("_pathMode");
 
             _time = serializedObject.FindProperty("_time");
             _speed = serializedObject.FindProperty("_speed");
@@ -38,9 +40,17 @@ namespace Klak.Hap
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(_fileName);
+            // Source file
+            EditorGUILayout.PropertyField(_filePath);
+            EditorGUILayout.PropertyField(_pathMode);
+
+            EditorGUILayout.Space();
+
+            // Playback control
             EditorGUILayout.PropertyField(_time);
             EditorGUILayout.PropertyField(_speed);
+
+            EditorGUILayout.Space();
 
             // Target texture/renderer
             EditorGUILayout.PropertyField(_targetTexture);

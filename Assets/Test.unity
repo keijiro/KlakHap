@@ -143,7 +143,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3775962864755b43a790abf4d029c32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _fileName: Dowit.mov
+  _pathMode: 0
+  _filePath: Dowit.mov
   _time: 0
   _speed: 1
   _targetTexture: {fileID: 0}
@@ -284,7 +285,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3775962864755b43a790abf4d029c32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _fileName: TrailerQ.mov
+  _pathMode: 0
+  _filePath: TrailerQ.mov
   _time: 0
   _speed: 1
   _targetTexture: {fileID: 8400000, guid: a8a702a1735e8eb4e8d08ded26055319, type: 2}
