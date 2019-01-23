@@ -1,4 +1,4 @@
-Shader "Hap/HapQ"
+Shader "Klak/HAP Q"
 {
     Properties
     {

@@ -11,7 +11,7 @@ namespace Klak.Hap
         [SerializeField] float _time = 0;
         [SerializeField, Range(-10, 10)] float _speed = 1;
 
-        [SerializeField] RenderTexture _targetTexture;
+        [SerializeField] RenderTexture _targetTexture = null;
         [SerializeField] Renderer _targetRenderer = null;
         [SerializeField] string _targetMaterialProperty = null;
 
@@ -22,15 +22,45 @@ namespace Klak.Hap
         Demuxer _demuxer;
         StreamReader _stream;
         Decoder _decoder;
-        TextureUpdater _updater;
 
         Texture2D _texture;
+        TextureUpdater _updater;
 
         float _playbackTime;
         float _appliedSpeed;
 
+        #endregion
+
+        #region External object updaters
+
         Material _blitMaterial;
         MaterialPropertyBlock _propertyBlock;
+
+        void UpdateTargetTexture()
+        {
+            if (_targetTexture == null) return;
+
+            // Material lazy initialization
+            if (_blitMaterial == null)
+                _blitMaterial = new Material(Utility.DetermineShader(_demuxer.VideoType));
+
+            // Blit
+            Graphics.Blit(_texture, _targetTexture, _blitMaterial, 0);
+        }
+
+        void UpdateTargetRenderer()
+        {
+            if (_targetRenderer == null) return;
+
+            // Material property block lazy initialization
+            if (_propertyBlock == null)
+                _propertyBlock = new MaterialPropertyBlock();
+
+            // Read-modify-write
+            _targetRenderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetTexture(_targetMaterialProperty, _texture);
+            _targetRenderer.SetPropertyBlock(_propertyBlock);
+        }
 
         #endregion
 
@@ -61,7 +91,8 @@ namespace Klak.Hap
 
             // Texture initialization
             _texture = new Texture2D(
-                _demuxer.Width, _demuxer.Height, _demuxer.TextureFormat, false
+                _demuxer.Width, _demuxer.Height,
+                Utility.DetermineTextureFormat(_demuxer.VideoType), false
             );
             _updater = new TextureUpdater(_texture, _decoder.CallbackID);
         }
@@ -105,7 +136,7 @@ namespace Klak.Hap
             }
         }
 
-        void Update()
+        void LateUpdate()
         {
             if (_demuxer == null) return;
 
@@ -117,24 +148,17 @@ namespace Klak.Hap
                 _appliedSpeed = _speed;
             }
 
+            // Decode and update
             _decoder.UpdateTime(_time);
             _updater.RequestUpdate();
 
+            // Time advance
             _time += Time.deltaTime * _appliedSpeed;
             _playbackTime = _time;
 
-            // Renderer override
-            if (_targetRenderer != null)
-            {
-                // Material property block lazy initialization
-                if (_propertyBlock == null)
-                    _propertyBlock = new MaterialPropertyBlock();
-
-                // Read-modify-write
-                _targetRenderer.GetPropertyBlock(_propertyBlock);
-                _propertyBlock.SetTexture(_targetMaterialProperty, _texture);
-                _targetRenderer.SetPropertyBlock(_propertyBlock);
-            }
+            // External object updates
+            UpdateTargetRenderer();
+            UpdateTargetTexture();
         }
 
         #endregion

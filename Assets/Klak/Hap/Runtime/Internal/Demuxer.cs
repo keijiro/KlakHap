@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using UnityEngine;
 
 namespace Klak.Hap
 {
@@ -14,18 +13,6 @@ namespace Klak.Hap
         public int VideoType { get { return _videoType; } }
         public double Duration { get { return _duration; } }
         public int FrameCount { get { return _frameCount; } }
-
-        public TextureFormat TextureFormat { get {
-            switch (_videoType & 0xf)
-            {
-                case 0xb: return TextureFormat.DXT1;
-                case 0xe: return TextureFormat.DXT5;
-                case 0xf: return TextureFormat.DXT5;
-                case 0xc: return TextureFormat.BC7;
-                case 0x1: return TextureFormat.BC4;
-            }
-            return TextureFormat.DXT1;
-        } }
 
         #endregion
 
