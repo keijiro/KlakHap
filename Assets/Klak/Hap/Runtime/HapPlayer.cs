@@ -14,7 +14,7 @@ namespace Klak.Hap
 
         [SerializeField] float _time = 0;
         [SerializeField, Range(-10, 10)] float _speed = 1;
-        [SerializeField] bool _looping = true;
+        [SerializeField] bool _loop = true;
 
         [SerializeField] RenderTexture _targetTexture = null;
         [SerializeField] Renderer _targetRenderer = null;
@@ -34,9 +34,9 @@ namespace Klak.Hap
             set { _speed = value; }
         }
 
-        public bool looping {
-            get { return _looping; }
-            set { _looping = value; }
+        public bool loop {
+            get { return _loop; }
+            set { _loop = value; }
         }
 
         public RenderTexture targetTexture {
@@ -103,8 +103,8 @@ namespace Klak.Hap
         Texture2D _texture;
         TextureUpdater _updater;
 
-        float _playbackTime;
-        float _appliedSpeed;
+        float _storedTime;
+        float _storedSpeed;
 
         void OpenInternal()
         {
@@ -121,8 +121,7 @@ namespace Klak.Hap
 
             // Stream reader instantiation
             _stream = new StreamReader(_demuxer, _time, _speed / 60);
-            _playbackTime = _time;
-            _appliedSpeed = _speed;
+            (_storedTime, _storedSpeed) = (_time, _speed);
 
             // Decoder instantiation
             _decoder = new Decoder(
@@ -224,11 +223,10 @@ namespace Klak.Hap
             if (_demuxer == null) return;
 
             // Restart the stream reader when the time/speed were changed.
-            if (_time != _playbackTime || _speed != _appliedSpeed)
+            if (_time != _storedTime || _speed != _storedSpeed)
             {
                 _stream.Restart(_time, _speed / 60);
-                _playbackTime = _time;
-                _appliedSpeed = _speed;
+                (_storedTime, _storedSpeed) = (_time, _speed);
             }
 
             // Decode and update
@@ -236,9 +234,9 @@ namespace Klak.Hap
             _updater.RequestUpdate();
 
             // Time advance
-            _time += Time.deltaTime * _appliedSpeed;
-            if (!_looping) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
-            _playbackTime = _time;
+            _time += Time.deltaTime * _speed;
+            if (!_loop) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
+            _storedTime = _time;
 
             // External object updates
             UpdateTargetRenderer();
