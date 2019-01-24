@@ -4,13 +4,22 @@ using System.Collections;
 
 class ScriptingTest : MonoBehaviour
 {
+    enum RetrievalMethod { TargetRenderer, TextureReference }
+
     [SerializeField] string _fileName = "Test.mov";
+    [SerializeField] RetrievalMethod _method = RetrievalMethod.TargetRenderer;
 
     IEnumerator Start()
     {
         var player = gameObject.AddComponent<HapPlayer>();
-        player.targetRenderer = GetComponent<Renderer>();
         player.Open(_fileName);
+
+        var renderer = GetComponent<Renderer>();
+
+        if (_method == RetrievalMethod.TargetRenderer)
+            player.targetRenderer = renderer;
+        else
+            renderer.material.mainTexture = player.texture;
 
         for (var i = 0; i < 20; i++)
         {
@@ -19,6 +28,6 @@ class ScriptingTest : MonoBehaviour
         }
 
         Destroy(player);
-        GetComponent<Renderer>().enabled = false;
+        renderer.enabled = false;
     }
 }

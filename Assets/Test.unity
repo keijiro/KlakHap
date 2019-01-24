@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -147,7 +147,7 @@ MonoBehaviour:
   _filePath: Dowit.mov
   _time: 0
   _speed: 1
-  _looping: 1
+  _loop: 1
   _targetTexture: {fileID: 0}
   _targetRenderer: {fileID: 757487801}
   _targetMaterialProperty: _MainTex
@@ -242,6 +242,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _fileName: Trailer.mov
+  _method: 0
 --- !u!23 &803621859
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -381,7 +382,7 @@ MonoBehaviour:
   _filePath: TrailerQ.mov
   _time: 0
   _speed: 1
-  _looping: 1
+  _loop: 1
   _targetTexture: {fileID: 8400000, guid: a8a702a1735e8eb4e8d08ded26055319, type: 2}
   _targetRenderer: {fileID: 833700145}
   _targetMaterialProperty: _MainTex

@@ -74,6 +74,8 @@ namespace Klak.Hap
                 return _filePath;
         } }
 
+        public Texture2D texture { get { return _texture; } }
+
         #endregion
 
         #region Public methods
