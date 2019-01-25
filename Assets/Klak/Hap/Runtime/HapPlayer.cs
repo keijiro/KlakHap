@@ -135,6 +135,7 @@ namespace Klak.Hap
                 _demuxer.Width, _demuxer.Height,
                 Utility.DetermineTextureFormat(_demuxer.VideoType), false
             );
+            _texture.wrapMode = TextureWrapMode.Clamp;
             _updater = new TextureUpdater(_texture, _decoder.CallbackID);
         }
 
