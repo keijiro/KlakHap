@@ -14,9 +14,16 @@ Shader "Klak/HAP Q"
 
     half3 CoCgSY2RGB(half4 i)
     {
+    #if !defined(UNITY_COLORSPACE_GAMMA)
+        i.xyz = LinearToGammaSpace(i.xyz);
+    #endif
         i.xy -= half2(0.50196078431373, 0.50196078431373);
         half s = 1 / ((i.z * (255.0 / 8)) + 1);
-        return half3(i.x - i.y, i.y, -i.x - i.y) * s + i.w;
+        half3 rgb = half3(i.x - i.y, i.y, -i.x - i.y) * s + i.w;
+    #if !defined(UNITY_COLORSPACE_GAMMA)
+        rgb = GammaToLinearSpace(rgb);
+    #endif
+        return rgb;
     }
 
     float4 Vertex(
@@ -45,6 +52,7 @@ Shader "Klak/HAP Q"
         Pass
         {
             CGPROGRAM
+            #pragma multi_compile _ UNITY_COLORSPACE_GAMMA
             #pragma vertex Vertex
             #pragma fragment Fragment
             ENDCG
