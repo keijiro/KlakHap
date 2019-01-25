@@ -307,7 +307,7 @@ MonoBehaviour:
   m_OpenClipTimeOffset: 0
   m_OpenClipRemoveOffset: 0
   m_MatchTargetFields: 63
-  m_Position: {x: 0, y: 0, z: 0}
+  m_Position: {x: -1.5, y: 0, z: 0}
   m_EulerAngles: {x: 0, y: 0, z: 0}
   m_AvatarMask: {fileID: 0}
   m_ApplyAvatarMask: 1
