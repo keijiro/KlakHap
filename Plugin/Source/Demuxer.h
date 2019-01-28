@@ -16,7 +16,12 @@ namespace KlakHap
         {
             std::memset(&demux_, 0, sizeof(MP4D_demux_t));
 
+        #ifdef _MSC_VER
             if (fopen_s(&file_, path, "rb") != 0) return;
+        #else
+            file_ = fopen(path, "rb");
+            if (file_ == nullptr) return;
+        #endif
 
             if (MP4D__open(&demux_, file_) == 0)
             {

@@ -40,7 +40,11 @@ typedef enum {BOX_ATOM, BOX_OD} mp4d_boxtype_t;
 static off_t mp4d_fsize(FILE * f) 
 {
     struct stat st;
+#ifdef _MSC_VER
     if (fstat(_fileno(f), &st) == 0)
+#else
+    if (fstat(fileno(f), &st) == 0)
+#endif
     {
         return st.st_size;
     }

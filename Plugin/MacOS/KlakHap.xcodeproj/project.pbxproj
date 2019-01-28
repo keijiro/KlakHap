@@ -1,0 +1,386 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0FF5863F21FEF4BA00625D06 /* hap.c in Sources */ = {isa = PBXBuildFile; fileRef = 0FF5863E21FEF4BA00625D06 /* hap.c */; };
+		0FF5864B21FEF4DF00625D06 /* snappy-stubs-internal.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0FF5864621FEF4DF00625D06 /* snappy-stubs-internal.cc */; };
+		0FF5864C21FEF4DF00625D06 /* snappy-c.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0FF5864721FEF4DF00625D06 /* snappy-c.cc */; };
+		0FF5864D21FEF4DF00625D06 /* snappy-sinksource.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0FF5864921FEF4DF00625D06 /* snappy-sinksource.cc */; };
+		0FF5864E21FEF4DF00625D06 /* snappy.cc in Sources */ = {isa = PBXBuildFile; fileRef = 0FF5864A21FEF4DF00625D06 /* snappy.cc */; };
+		0FF5865321FEF50700625D06 /* mp4demux.c in Sources */ = {isa = PBXBuildFile; fileRef = 0FF5865221FEF50700625D06 /* mp4demux.c */; };
+		0FF5865D21FEF52E00625D06 /* KlakHap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0FF5865C21FEF52E00625D06 /* KlakHap.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0FBE73D321FEF40C00365A92 /* KlakHap.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KlakHap.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		0FF5863A21FEF47800625D06 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0FF5863D21FEF4BA00625D06 /* hap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hap.h; sourceTree = "<group>"; };
+		0FF5863E21FEF4BA00625D06 /* hap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = hap.c; sourceTree = "<group>"; };
+		0FF5864121FEF4DF00625D06 /* snappy-sinksource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "snappy-sinksource.h"; sourceTree = "<group>"; };
+		0FF5864221FEF4DF00625D06 /* snappy-internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "snappy-internal.h"; sourceTree = "<group>"; };
+		0FF5864321FEF4DF00625D06 /* snappy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = snappy.h; sourceTree = "<group>"; };
+		0FF5864421FEF4DF00625D06 /* snappy-c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "snappy-c.h"; sourceTree = "<group>"; };
+		0FF5864521FEF4DF00625D06 /* snappy-stubs-public.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "snappy-stubs-public.h"; sourceTree = "<group>"; };
+		0FF5864621FEF4DF00625D06 /* snappy-stubs-internal.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "snappy-stubs-internal.cc"; sourceTree = "<group>"; };
+		0FF5864721FEF4DF00625D06 /* snappy-c.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "snappy-c.cc"; sourceTree = "<group>"; };
+		0FF5864821FEF4DF00625D06 /* snappy-stubs-internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "snappy-stubs-internal.h"; sourceTree = "<group>"; };
+		0FF5864921FEF4DF00625D06 /* snappy-sinksource.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "snappy-sinksource.cc"; sourceTree = "<group>"; };
+		0FF5864A21FEF4DF00625D06 /* snappy.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snappy.cc; sourceTree = "<group>"; };
+		0FF5865021FEF50700625D06 /* mp4defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mp4defs.h; sourceTree = "<group>"; };
+		0FF5865121FEF50700625D06 /* mp4demux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mp4demux.h; sourceTree = "<group>"; };
+		0FF5865221FEF50700625D06 /* mp4demux.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mp4demux.c; sourceTree = "<group>"; };
+		0FF5865521FEF51500625D06 /* IUnityInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IUnityInterface.h; sourceTree = "<group>"; };
+		0FF5865621FEF51500625D06 /* IUnityGraphics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IUnityGraphics.h; sourceTree = "<group>"; };
+		0FF5865721FEF51500625D06 /* IUnityRenderingExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IUnityRenderingExtensions.h; sourceTree = "<group>"; };
+		0FF5865921FEF52E00625D06 /* ReadBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReadBuffer.h; sourceTree = "<group>"; };
+		0FF5865A21FEF52E00625D06 /* Decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Decoder.h; sourceTree = "<group>"; };
+		0FF5865B21FEF52E00625D06 /* Demuxer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Demuxer.h; sourceTree = "<group>"; };
+		0FF5865C21FEF52E00625D06 /* KlakHap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KlakHap.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0FBE73D021FEF40C00365A92 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0FBE73CA21FEF40C00365A92 = {
+			isa = PBXGroup;
+			children = (
+				0FF5863C21FEF4BA00625D06 /* Hap */,
+				0FF5864F21FEF50700625D06 /* MP4 */,
+				0FF5864021FEF4DF00625D06 /* Snappy */,
+				0FF5865821FEF52E00625D06 /* Source */,
+				0FF5865421FEF51500625D06 /* Unity */,
+				0FF5863A21FEF47800625D06 /* Info.plist */,
+				0FBE73D421FEF40C00365A92 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0FBE73D421FEF40C00365A92 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0FBE73D321FEF40C00365A92 /* KlakHap.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0FF5863C21FEF4BA00625D06 /* Hap */ = {
+			isa = PBXGroup;
+			children = (
+				0FF5863D21FEF4BA00625D06 /* hap.h */,
+				0FF5863E21FEF4BA00625D06 /* hap.c */,
+			);
+			name = Hap;
+			path = ../Hap;
+			sourceTree = "<group>";
+		};
+		0FF5864021FEF4DF00625D06 /* Snappy */ = {
+			isa = PBXGroup;
+			children = (
+				0FF5864121FEF4DF00625D06 /* snappy-sinksource.h */,
+				0FF5864221FEF4DF00625D06 /* snappy-internal.h */,
+				0FF5864321FEF4DF00625D06 /* snappy.h */,
+				0FF5864421FEF4DF00625D06 /* snappy-c.h */,
+				0FF5864521FEF4DF00625D06 /* snappy-stubs-public.h */,
+				0FF5864621FEF4DF00625D06 /* snappy-stubs-internal.cc */,
+				0FF5864721FEF4DF00625D06 /* snappy-c.cc */,
+				0FF5864821FEF4DF00625D06 /* snappy-stubs-internal.h */,
+				0FF5864921FEF4DF00625D06 /* snappy-sinksource.cc */,
+				0FF5864A21FEF4DF00625D06 /* snappy.cc */,
+			);
+			name = Snappy;
+			path = ../Snappy;
+			sourceTree = "<group>";
+		};
+		0FF5864F21FEF50700625D06 /* MP4 */ = {
+			isa = PBXGroup;
+			children = (
+				0FF5865021FEF50700625D06 /* mp4defs.h */,
+				0FF5865121FEF50700625D06 /* mp4demux.h */,
+				0FF5865221FEF50700625D06 /* mp4demux.c */,
+			);
+			name = MP4;
+			path = ../MP4;
+			sourceTree = "<group>";
+		};
+		0FF5865421FEF51500625D06 /* Unity */ = {
+			isa = PBXGroup;
+			children = (
+				0FF5865521FEF51500625D06 /* IUnityInterface.h */,
+				0FF5865621FEF51500625D06 /* IUnityGraphics.h */,
+				0FF5865721FEF51500625D06 /* IUnityRenderingExtensions.h */,
+			);
+			name = Unity;
+			path = ../Unity;
+			sourceTree = "<group>";
+		};
+		0FF5865821FEF52E00625D06 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				0FF5865921FEF52E00625D06 /* ReadBuffer.h */,
+				0FF5865A21FEF52E00625D06 /* Decoder.h */,
+				0FF5865B21FEF52E00625D06 /* Demuxer.h */,
+				0FF5865C21FEF52E00625D06 /* KlakHap.cpp */,
+			);
+			name = Source;
+			path = ../Source;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0FBE73D221FEF40C00365A92 /* KlakHap */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0FBE73D921FEF40C00365A92 /* Build configuration list for PBXNativeTarget "KlakHap" */;
+			buildPhases = (
+				0FBE73CF21FEF40C00365A92 /* Sources */,
+				0FBE73D021FEF40C00365A92 /* Frameworks */,
+				0FBE73D121FEF40C00365A92 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = KlakHap;
+			productName = KlakHap;
+			productReference = 0FBE73D321FEF40C00365A92 /* KlakHap.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0FBE73CB21FEF40C00365A92 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1010;
+				ORGANIZATIONNAME = "Keijiro Takahashi";
+				TargetAttributes = {
+					0FBE73D221FEF40C00365A92 = {
+						CreatedOnToolsVersion = 10.1;
+					};
+				};
+			};
+			buildConfigurationList = 0FBE73CE21FEF40C00365A92 /* Build configuration list for PBXProject "KlakHap" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 0FBE73CA21FEF40C00365A92;
+			productRefGroup = 0FBE73D421FEF40C00365A92 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0FBE73D221FEF40C00365A92 /* KlakHap */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0FBE73D121FEF40C00365A92 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0FBE73CF21FEF40C00365A92 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FF5865D21FEF52E00625D06 /* KlakHap.cpp in Sources */,
+				0FF5864E21FEF4DF00625D06 /* snappy.cc in Sources */,
+				0FF5863F21FEF4BA00625D06 /* hap.c in Sources */,
+				0FF5864B21FEF4DF00625D06 /* snappy-stubs-internal.cc in Sources */,
+				0FF5864D21FEF4DF00625D06 /* snappy-sinksource.cc in Sources */,
+				0FF5864C21FEF4DF00625D06 /* snappy-c.cc in Sources */,
+				0FF5865321FEF50700625D06 /* mp4demux.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0FBE73D721FEF40C00365A92 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		0FBE73D821FEF40C00365A92 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		0FBE73DA21FEF40C00365A92 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = jp.keijiro.KlakHap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Debug;
+		};
+		0FBE73DB21FEF40C00365A92 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = jp.keijiro.KlakHap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0FBE73CE21FEF40C00365A92 /* Build configuration list for PBXProject "KlakHap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FBE73D721FEF40C00365A92 /* Debug */,
+				0FBE73D821FEF40C00365A92 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0FBE73D921FEF40C00365A92 /* Build configuration list for PBXNativeTarget "KlakHap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FBE73DA21FEF40C00365A92 /* Debug */,
+				0FBE73DB21FEF40C00365A92 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0FBE73CB21FEF40C00365A92 /* Project object */;
+}
