@@ -27,7 +27,7 @@ System requirements
 
 - Unity 2018.3 or later
 
-At the moment, KlakHAP only supports Windows 64-bit and Direct3D11.
+At the moment, KlakHAP only supports Windows 64-bit and macOS 64-bit.
 
 Supported formats
 -----------------
