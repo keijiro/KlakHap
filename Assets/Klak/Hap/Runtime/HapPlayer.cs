@@ -137,6 +137,27 @@ namespace Klak.Hap
             );
             _texture.wrapMode = TextureWrapMode.Clamp;
             _updater = new TextureUpdater(_texture, _decoder.CallbackID);
+
+            _texture.LoadRawTextureData(_decoder.LockBuffer(), _decoder.BufferSize);
+            _texture.Apply();
+            _decoder.UnlockBuffer();
+        }
+
+        System.Collections.IEnumerator DelayedUpdater()
+        {
+            for (var eof = new WaitForEndOfFrame();;)
+            {
+                yield return eof;
+
+                if (!enabled) break;
+
+                if (_texture != null && _decoder != null)
+                {
+                    _texture.LoadRawTextureData(_decoder.LockBuffer(), _decoder.BufferSize);
+                    _texture.Apply();
+                    _decoder.UnlockBuffer();
+                }
+            }
         }
 
         #endregion
@@ -180,6 +201,11 @@ namespace Klak.Hap
         {
             if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
                 OpenInternal();
+        }
+
+        void OnEnable()
+        {
+            StartCoroutine(DelayedUpdater());
         }
 
         void OnDestroy()
@@ -235,9 +261,6 @@ namespace Klak.Hap
             // Decode and update
             _decoder.UpdateTime(_time);
             //_updater.RequestUpdate();
-            _texture.LoadRawTextureData(_decoder.LockBuffer(), _decoder.BufferSize);
-            _texture.Apply();
-            _decoder.UnlockBuffer();
 
             // Time advance
             _time += Time.deltaTime * _speed;
