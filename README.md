@@ -92,9 +92,10 @@ property. Although it's the most performant way to render video frames, it
 needs a few additional steps to be rendered correctly. The following points
 should be taken into account:
 
-- UV coordinates incompatibility: Decoded textures will be upside-down on
-  Direct3D. It can be fixed using a vertically-inverted texture scale/offset.
-  You can also use the `Klak/Hap` shader for this purpose.
+- UV coordinates incompatibility: Decoded textures will be upside-down due to
+  the difference in the UV coodinate conventions between Unity and HAP. It can
+  be fixed using a vertically-inverted texture scale/offset. You can also use
+  the `Klak/Hap` shader for this purpose.
 - Color space conversion for HAP Q: [YCoCg conversion] must be added to a
   shader when using HAP Q. You can also use the `Klak/HAP Q` for this purpose.
 
