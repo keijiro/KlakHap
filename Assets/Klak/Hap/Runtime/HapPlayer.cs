@@ -234,7 +234,10 @@ namespace Klak.Hap
 
             // Decode and update
             _decoder.UpdateTime(_time);
-            _updater.RequestUpdate();
+            //_updater.RequestUpdate();
+            _texture.LoadRawTextureData(_decoder.LockBuffer(), _decoder.BufferSize);
+            _texture.Apply();
+            _decoder.UnlockBuffer();
 
             // Time advance
             _time += Time.deltaTime * _speed;

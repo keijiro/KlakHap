@@ -34,6 +34,11 @@ namespace KlakHap
             bufferLock_.unlock();
         }
 
+        size_t GetBufferSize() const
+        {
+            return buffer_.size();
+        }
+
         #pragma endregion
 
         #pragma region Decoding operations

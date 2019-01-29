@@ -50,10 +50,24 @@ namespace Klak.Hap
 
         public uint CallbackID { get { return _id; } }
 
+        public int BufferSize { get {
+            return KlakHap_GetDecoderBufferSize(_plugin);
+        } }
+
         public void UpdateTime(float time)
         {
             _time = time;
             _resume.Set();
+        }
+
+        public IntPtr LockBuffer()
+        {
+            return KlakHap_LockDecoderBuffer(_plugin);
+        }
+
+        public void UnlockBuffer()
+        {
+            KlakHap_UnlockDecoderBuffer(_plugin);
         }
 
         #endregion
@@ -106,6 +120,15 @@ namespace Klak.Hap
 
         [DllImport("KlakHap")]
         internal static extern void KlakHap_DecodeFrame(IntPtr decoder, IntPtr input);
+
+        [DllImport("KlakHap")]
+        internal static extern IntPtr KlakHap_LockDecoderBuffer(IntPtr decoder);
+
+        [DllImport("KlakHap")]
+        internal static extern void KlakHap_UnlockDecoderBuffer(IntPtr decoder);
+
+        [DllImport("KlakHap")]
+        internal static extern int KlakHap_GetDecoderBufferSize(IntPtr decoder);
 
         #endregion
     }

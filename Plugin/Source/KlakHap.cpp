@@ -177,4 +177,22 @@ extern "C" void UNITY_INTERFACE_EXPORT KlakHap_DecodeFrame(Decoder* decoder, con
     decoder->DecodeFrame(*input);
 }
 
+extern "C" const void UNITY_INTERFACE_EXPORT *KlakHap_LockDecoderBuffer(Decoder* decoder)
+{
+    if (decoder == nullptr) return nullptr;
+    return decoder->LockBuffer();
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT KlakHap_UnlockDecoderBuffer(Decoder* decoder)
+{
+    if (decoder == nullptr) return;
+    decoder->UnlockBuffer();
+}
+
+extern "C" int32_t UNITY_INTERFACE_EXPORT KlakHap_GetDecoderBufferSize(Decoder* decoder)
+{
+    if (decoder == nullptr) return 0;
+    return static_cast<int32_t>(decoder->GetBufferSize());
+}
+
 #pragma endregion
