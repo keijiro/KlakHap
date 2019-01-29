@@ -136,7 +136,19 @@ namespace Klak.Hap
                 Utility.DetermineTextureFormat(_demuxer.VideoType), false
             );
             _texture.wrapMode = TextureWrapMode.Clamp;
-            _updater = new TextureUpdater(_texture, _decoder.CallbackID);
+            _updater = new TextureUpdater(_texture, _decoder);
+
+            // Start the updater coroutine if async update is not supported.
+            if (!TextureUpdater.AsyncSupport) StartCoroutine(DelayedUpdater());
+        }
+
+        System.Collections.IEnumerator DelayedUpdater()
+        {
+            for (var eof = new WaitForEndOfFrame(); enabled;)
+            {
+                _updater.UpdateNow();
+                yield return eof;
+            }
         }
 
         #endregion
@@ -180,6 +192,13 @@ namespace Klak.Hap
         {
             if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
                 OpenInternal();
+        }
+
+        void OnEnable()
+        {
+            // Updater coroutine restart
+            if (_updater != null && !TextureUpdater.AsyncSupport)
+                StartCoroutine(DelayedUpdater());
         }
 
         void OnDestroy()
@@ -234,7 +253,7 @@ namespace Klak.Hap
 
             // Decode and update
             _decoder.UpdateTime(_time);
-            _updater.RequestUpdate();
+            if (TextureUpdater.AsyncSupport) _updater.RequestAsyncUpdate();
 
             // Time advance
             _time += Time.deltaTime * _speed;
