@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cstring>
 #include "mp4demux.h"
 #include "ReadBuffer.h"
 
