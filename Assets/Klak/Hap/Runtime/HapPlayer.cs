@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 namespace Klak.Hap
 {
     [ExecuteInEditMode, AddComponentMenu("Klak/HAP/HAP Player")]
-    public sealed class HapPlayer : MonoBehaviour
+    public sealed class HapPlayer : MonoBehaviour, ITimeControl, IPropertyPreview
     {
         #region Editable attributes
 
@@ -197,6 +199,35 @@ namespace Klak.Hap
 
         #endregion
 
+        #region ITimeControl functions
+
+        float _externalTime = -1;
+
+        public void OnControlTimeStart()
+        {
+            _externalTime = 0;
+        }
+
+        public void OnControlTimeStop()
+        {
+            _externalTime = -1;
+        }
+
+        public void SetTime(double time)
+        {
+            _externalTime = (float)time;
+        }
+
+        #endregion
+
+        #region IPropertyPreview implementation
+
+        public void GatherProperties(PlayableDirector director, IPropertyCollector driver)
+        {
+        }
+
+        #endregion
+
         #region MonoBehaviour implementation
 
         void OnEnable()
@@ -243,21 +274,38 @@ namespace Klak.Hap
 
             if (_demuxer == null) return;
 
-            // Restart the stream reader when the time/speed were changed.
-            if (_time != _storedTime || _speed != _storedSpeed)
+            if (_externalTime < 0)
             {
-                _stream.Restart(_time, _speed / 60);
-                (_storedTime, _storedSpeed) = (_time, _speed);
+                // Restart the stream reader when the time/speed were changed.
+                if (_time != _storedTime || _speed != _storedSpeed)
+                {
+                    _stream.Restart(_time, _speed / 60);
+                    (_storedTime, _storedSpeed) = (_time, _speed);
+                }
+
+                // Decode and update
+                _decoder.UpdateTime(_time);
+
+                // Time advance
+                if (Application.isPlaying) _time += Time.deltaTime * _speed;
+                if (!_loop) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
+                _storedTime = _time;
+            }
+            else if (_externalTime != _storedTime || _speed != _storedSpeed)
+            {
+                // We can't determine the actual speed so only apply the
+                // playback direction.
+                var dir = _externalTime > _storedTime ? 1 : -1;
+
+                // Restart the stream reader every frame.
+                _stream.Restart(_externalTime * _speed, dir * _speed / 60);
+                _decoder.UpdateTime(_externalTime * _speed);
+
+                (_storedTime, _storedSpeed) = (_externalTime, _speed);
             }
 
-            // Decode and update
-            _decoder.UpdateTime(_time);
+            // Async texture update request
             if (TextureUpdater.AsyncSupport) _updater.RequestAsyncUpdate();
-
-            // Time advance
-            if (Application.isPlaying) _time += Time.deltaTime * _speed;
-            if (!_loop) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
-            _storedTime = _time;
 
             // External object updates
             UpdateTargetRenderer();
