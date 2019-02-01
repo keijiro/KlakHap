@@ -90,8 +90,8 @@ namespace KlakHap
             unsigned int count, void* info
         )
         {
-            fputs("Threading callback is not implemented.", stderr);
-            exit(-1);
+            // FIXME: This should be threaded.
+            for (auto i = 0; i < count; i++) work(p, i);
         }
 
         #pragma endregion
