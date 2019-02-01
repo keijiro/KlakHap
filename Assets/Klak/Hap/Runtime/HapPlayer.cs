@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Klak.Hap
 {
-    [AddComponentMenu("Klak/HAP/HAP Player")]
+    [ExecuteInEditMode, AddComponentMenu("Klak/HAP/HAP Player")]
     public sealed class HapPlayer : MonoBehaviour
     {
         #region Editable attributes
@@ -58,6 +58,7 @@ namespace Klak.Hap
 
         #region Read-only properties
 
+        public bool isValid { get { return _demuxer != null; } }
         public int frameWidth { get { return _demuxer?.Width ?? 0; } }
         public int frameHeight { get { return _demuxer?.Height ?? 0; } }
         public int frameCount { get { return _demuxer?.FrameCount ?? 0; } }
@@ -115,7 +116,12 @@ namespace Klak.Hap
 
             if (!_demuxer.IsValid)
             {
-                Debug.LogError("Failed to open stream (" + resolvedFilePath + ").");
+                if (Application.isPlaying)
+                {
+                    // In play mode, show an error message and disable itself.
+                    Debug.LogError("Failed to open stream (" + resolvedFilePath + ").");
+                    enabled = false;
+                }
                 _demuxer.Dispose();
                 _demuxer = null;
                 return;
@@ -136,6 +142,8 @@ namespace Klak.Hap
                 Utility.DetermineTextureFormat(_demuxer.VideoType), false
             );
             _texture.wrapMode = TextureWrapMode.Clamp;
+            _texture.hideFlags = HideFlags.DontSave;
+
             _updater = new TextureUpdater(_texture, _decoder);
 
             // Start the updater coroutine if async update is not supported.
@@ -164,7 +172,10 @@ namespace Klak.Hap
 
             // Material lazy initialization
             if (_blitMaterial == null)
+            {
                 _blitMaterial = new Material(Utility.DetermineShader(_demuxer.VideoType));
+                _blitMaterial.hideFlags = HideFlags.DontSave;
+            }
 
             // Blit
             Graphics.Blit(_texture, _targetTexture, _blitMaterial, 0);
@@ -187,12 +198,6 @@ namespace Klak.Hap
         #endregion
 
         #region MonoBehaviour implementation
-
-        void Start()
-        {
-            if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
-                OpenInternal();
-        }
 
         void OnEnable()
         {
@@ -227,21 +232,15 @@ namespace Klak.Hap
                 _demuxer = null;
             }
 
-            if (_texture != null)
-            {
-                Destroy(_texture);
-                _texture = null;
-            }
-
-            if (_blitMaterial != null)
-            {
-                Destroy(_blitMaterial);
-                _blitMaterial = null;
-            }
+            Utility.Destroy(_texture);
+            Utility.Destroy(_blitMaterial);
         }
 
         void LateUpdate()
         {
+            if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
+                OpenInternal();
+
             if (_demuxer == null) return;
 
             // Restart the stream reader when the time/speed were changed.
@@ -256,7 +255,7 @@ namespace Klak.Hap
             if (TextureUpdater.AsyncSupport) _updater.RequestAsyncUpdate();
 
             // Time advance
-            _time += Time.deltaTime * _speed;
+            if (Application.isPlaying) _time += Time.deltaTime * _speed;
             if (!_loop) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
             _storedTime = _time;
 
