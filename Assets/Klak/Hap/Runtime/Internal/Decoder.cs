@@ -54,10 +54,20 @@ namespace Klak.Hap
             return KlakHap_GetDecoderBufferSize(_plugin);
         } }
 
-        public void UpdateTime(float time)
+        public void UpdateTime(float time, bool sync = false)
         {
             _time = time;
-            _resume.Set();
+
+            if (sync)
+            {
+                var buffer = _stream.Advance(_time);
+                if (buffer != null)
+                    KlakHap_DecodeFrame(_plugin, buffer.PluginPointer);
+            }
+            else
+            {
+                _resume.Set();
+            }
         }
 
         public IntPtr LockBuffer()

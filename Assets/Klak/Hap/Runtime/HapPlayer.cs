@@ -269,40 +269,52 @@ namespace Klak.Hap
 
         void LateUpdate()
         {
+            // Lazy initialization of demuxer
             if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
                 OpenInternal();
 
+            // Do nothing if the demuxer hasn't been instantiated.
             if (_demuxer == null) return;
+
+            float t, dt;
 
             if (_externalTime < 0)
             {
-                // Restart the stream reader when the time/speed were changed.
-                if (_time != _storedTime || _speed != _storedSpeed)
-                {
-                    _stream.Restart(_time, _speed / 60);
-                    (_storedTime, _storedSpeed) = (_time, _speed);
-                }
-
-                // Decode and update
-                _decoder.UpdateTime(_time);
-
-                // Time advance
-                if (Application.isPlaying) _time += Time.deltaTime * _speed;
-                if (!_loop) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
-                _storedTime = _time;
+                // Internal time mode
+                t = _time;
+                dt = _speed / 60;
             }
-            else if (_externalTime != _storedTime || _speed != _storedSpeed)
+            else
             {
-                // We can't determine the actual speed so only apply the
-                // playback direction.
-                var dir = _externalTime > _storedTime ? 1 : -1;
-
-                // Restart the stream reader every frame.
-                _stream.Restart(_externalTime * _speed, dir * _speed / 60);
-                _decoder.UpdateTime(_externalTime * _speed);
-
-                (_storedTime, _storedSpeed) = (_externalTime, _speed);
+                // External time (timeline) mode
+                t = _externalTime;
+                dt = (_externalTime > _storedTime ? 1 : -1) * _speed / 60;
             }
+
+            // Non-loop time clamping
+            if (!_loop) t = Mathf.Clamp(t, 0, (float)_demuxer.Duration);
+
+            // Were time/speed externally modified?
+            if (t != _storedTime || _speed != _storedSpeed)
+            {
+                // Restart the stream reader.
+                _stream.Restart(t, dt);
+
+                // Update the decoder time, then wait for deocoding.
+                _decoder.UpdateTime(t, true);
+            }
+            else
+            {
+                // Update the decoder time asynchronously.
+                _decoder.UpdateTime(t);
+            }
+
+            // Automatically advance the time in the play mode.
+            if (Application.isPlaying) t += Time.deltaTime * _speed;
+            _time = t;
+
+            // Update the stored state.
+            (_storedTime, _storedSpeed) = (t, _speed);
 
             // Async texture update request
             if (TextureUpdater.AsyncSupport) _updater.RequestAsyncUpdate();
