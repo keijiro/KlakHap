@@ -147,18 +147,6 @@ namespace Klak.Hap
             _texture.hideFlags = HideFlags.DontSave;
 
             _updater = new TextureUpdater(_texture, _decoder);
-
-            // Start the updater coroutine if async update is not supported.
-            if (!TextureUpdater.AsyncSupport) StartCoroutine(DelayedUpdater());
-        }
-
-        System.Collections.IEnumerator DelayedUpdater()
-        {
-            for (var eof = new WaitForEndOfFrame(); enabled;)
-            {
-                _updater.UpdateNow();
-                yield return eof;
-            }
         }
 
         #endregion
@@ -230,13 +218,6 @@ namespace Klak.Hap
 
         #region MonoBehaviour implementation
 
-        void OnEnable()
-        {
-            // Updater coroutine restart
-            if (_updater != null && !TextureUpdater.AsyncSupport)
-                StartCoroutine(DelayedUpdater());
-        }
-
         void OnDestroy()
         {
             if (_updater != null)
@@ -277,6 +258,7 @@ namespace Klak.Hap
             if (_demuxer == null) return;
 
             float t, dt;
+            bool sync = false;
 
             if (_externalTime < 0)
             {
@@ -299,14 +281,30 @@ namespace Klak.Hap
             {
                 // Restart the stream reader.
                 _stream.Restart(t, dt);
+                sync = true;
+            }
 
-                // Update the decoder time, then wait for deocoding.
-                _decoder.UpdateTime(t, true);
+            if (TextureUpdater.AsyncSupport)
+            {
+                // Async texture update supported:
+                // Decode (sync if needed) and request update.
+                if (sync) _decoder.UpdateSync(t); else _decoder.UpdateAsync(t);
+                _updater.RequestAsyncUpdate();
+            }
+            else if (sync)
+            {
+                // Sync point:
+                // Decode, wait and update.
+                _decoder.UpdateSync(t);
+                _updater.UpdateNow();
             }
             else
             {
-                // Update the decoder time asynchronously.
-                _decoder.UpdateTime(t);
+                // Non-sync point:
+                // Update first, then decode asynchronously. This introduces a
+                // single frame delay.
+                _updater.UpdateNow();
+                _decoder.UpdateAsync(t);
             }
 
             // Automatically advance the time in the play mode.
@@ -315,9 +313,6 @@ namespace Klak.Hap
 
             // Update the stored state.
             (_storedTime, _storedSpeed) = (t, _speed);
-
-            // Async texture update request
-            if (TextureUpdater.AsyncSupport) _updater.RequestAsyncUpdate();
 
             // External object updates
             UpdateTargetRenderer();
