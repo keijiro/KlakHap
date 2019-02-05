@@ -258,40 +258,48 @@ namespace Klak.Hap
             if (_demuxer == null) return;
 
             float t, dt;
-            bool sync = false;
+            bool resync = false;
+
+            // Detect speed changes; Resync is needed on them.
+            if (_speed != _storedSpeed)
+            {
+                resync = true;
+                _storedSpeed = _speed;
+            }
 
             if (_externalTime < 0)
             {
                 // Internal time mode
                 t = _time;
                 dt = _speed / 60;
+
+                // Resync if the time parameter was externally modified.
+                resync = _time != _storedTime;
             }
             else
             {
                 // External time (timeline) mode
                 t = _externalTime;
-                dt = (_externalTime > _storedTime ? 1 : -1) * _speed / 60;
+                dt = (float)(_demuxer.Duration / _demuxer.FrameCount * _speed);
+
+                // Resync if the time is not in [t_prev, t_prev + dt].
+                resync = t < _storedTime || t > _storedTime + dt;
             }
 
             // Non-loop time clamping
             if (!_loop) t = Mathf.Clamp(t, 0, (float)_demuxer.Duration);
 
-            // Were time/speed externally modified?
-            if (t != _storedTime || _speed != _storedSpeed)
-            {
-                // Restart the stream reader.
-                _stream.Restart(t, dt);
-                sync = true;
-            }
+            // Restart the stream reader on resync.
+            if (resync) _stream.Restart(t, dt);
 
             if (TextureUpdater.AsyncSupport)
             {
                 // Async texture update supported:
                 // Decode (sync if needed) and request update.
-                if (sync) _decoder.UpdateSync(t); else _decoder.UpdateAsync(t);
+                if (resync) _decoder.UpdateSync(t); else _decoder.UpdateAsync(t);
                 _updater.RequestAsyncUpdate();
             }
-            else if (sync)
+            else if (resync)
             {
                 // Sync point:
                 // Decode, wait and update.
@@ -307,12 +315,17 @@ namespace Klak.Hap
                 _decoder.UpdateAsync(t);
             }
 
-            // Automatically advance the time in the play mode.
-            if (Application.isPlaying) t += Time.deltaTime * _speed;
-            _time = t;
-
-            // Update the stored state.
-            (_storedTime, _storedSpeed) = (t, _speed);
+            if (_externalTime < 0)
+            {
+                // Internal time mode: Advance the time while play mode.
+                if (Application.isPlaying) _time += Time.deltaTime * _speed;
+                _storedTime = _time;
+            }
+            else
+            {
+                // External time mode: Simply store the external time value.
+                _storedTime = _externalTime;
+            }
 
             // External object updates
             UpdateTargetRenderer();
