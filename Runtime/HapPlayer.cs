@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 namespace Klak.Hap
 {
-    [AddComponentMenu("Klak/HAP/HAP Player")]
-    public sealed class HapPlayer : MonoBehaviour
+    [ExecuteInEditMode, AddComponentMenu("Klak/HAP/HAP Player")]
+    public sealed class HapPlayer : MonoBehaviour, ITimeControl, IPropertyPreview
     {
         #region Editable attributes
 
@@ -58,6 +60,7 @@ namespace Klak.Hap
 
         #region Read-only properties
 
+        public bool isValid { get { return _demuxer != null; } }
         public int frameWidth { get { return _demuxer?.Width ?? 0; } }
         public int frameHeight { get { return _demuxer?.Height ?? 0; } }
         public int frameCount { get { return _demuxer?.FrameCount ?? 0; } }
@@ -115,7 +118,13 @@ namespace Klak.Hap
 
             if (!_demuxer.IsValid)
             {
-                Debug.LogError("Failed to open stream (" + resolvedFilePath + ").");
+                if (Application.isPlaying)
+                {
+                    // In play mode, show an error message, then disable itself
+                    // to prevent spamming the console.
+                    Debug.LogError("Failed to open stream (" + resolvedFilePath + ").");
+                    enabled = false;
+                }
                 _demuxer.Dispose();
                 _demuxer = null;
                 return;
@@ -136,19 +145,9 @@ namespace Klak.Hap
                 Utility.DetermineTextureFormat(_demuxer.VideoType), false
             );
             _texture.wrapMode = TextureWrapMode.Clamp;
+            _texture.hideFlags = HideFlags.DontSave;
+
             _updater = new TextureUpdater(_texture, _decoder);
-
-            // Start the updater coroutine if async update is not supported.
-            if (!TextureUpdater.AsyncSupport) StartCoroutine(DelayedUpdater());
-        }
-
-        System.Collections.IEnumerator DelayedUpdater()
-        {
-            for (var eof = new WaitForEndOfFrame(); enabled;)
-            {
-                _updater.UpdateNow();
-                yield return eof;
-            }
         }
 
         #endregion
@@ -164,7 +163,10 @@ namespace Klak.Hap
 
             // Material lazy initialization
             if (_blitMaterial == null)
+            {
                 _blitMaterial = new Material(Utility.DetermineShader(_demuxer.VideoType));
+                _blitMaterial.hideFlags = HideFlags.DontSave;
+            }
 
             // Blit
             Graphics.Blit(_texture, _targetTexture, _blitMaterial, 0);
@@ -186,20 +188,44 @@ namespace Klak.Hap
 
         #endregion
 
+        #region ITimeControl implementation
+
+        bool _externalTime;
+
+        public void OnControlTimeStart()
+        {
+            _externalTime = true;
+
+            // In the external time mode, we can't know the actual playback
+            // speed but sure that it's positive (Control Track doesn't support
+            // reverse playback), so we assume that the speed is 1.0.
+            // Cons: Resync could happen every frame for high speed play back.
+            _speed = 1;
+        }
+
+        public void OnControlTimeStop()
+        {
+            _externalTime = false;
+        }
+
+        public void SetTime(double time)
+        {
+            _time = (float)time;
+            _speed = 1;
+        }
+
+        #endregion
+
+        #region IPropertyPreview implementation
+
+        public void GatherProperties(PlayableDirector director, IPropertyCollector driver)
+        {
+            driver.AddFromName<HapPlayer>(gameObject, "_time");
+        }
+
+        #endregion
+
         #region MonoBehaviour implementation
-
-        void Start()
-        {
-            if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
-                OpenInternal();
-        }
-
-        void OnEnable()
-        {
-            // Updater coroutine restart
-            if (_updater != null && !TextureUpdater.AsyncSupport)
-                StartCoroutine(DelayedUpdater());
-        }
 
         void OnDestroy()
         {
@@ -227,37 +253,69 @@ namespace Klak.Hap
                 _demuxer = null;
             }
 
-            if (_texture != null)
-            {
-                Destroy(_texture);
-                _texture = null;
-            }
-
-            if (_blitMaterial != null)
-            {
-                Destroy(_blitMaterial);
-                _blitMaterial = null;
-            }
+            Utility.Destroy(_texture);
+            Utility.Destroy(_blitMaterial);
         }
 
         void LateUpdate()
         {
+            // Lazy initialization of demuxer
+            if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
+                OpenInternal();
+
+            // Do nothing if the demuxer hasn't been instantiated.
             if (_demuxer == null) return;
 
-            // Restart the stream reader when the time/speed were changed.
-            if (_time != _storedTime || _speed != _storedSpeed)
+            var duration = (float)_demuxer.Duration;
+
+            // Check if _time is still in the same frame of _storedTime.
+            // Resync is needed when it went out of the frame.
+            var dt = duration / _demuxer.FrameCount;
+            var resync = _time < _storedTime || _time > _storedTime + dt;
+
+            // Check if the speed was externally modified.
+            if (_speed != _storedSpeed)
             {
-                _stream.Restart(_time, _speed / 60);
-                (_storedTime, _storedSpeed) = (_time, _speed);
+                resync = true; // Resync to adapt to the new speed.
+                _storedSpeed = _speed;
             }
 
-            // Decode and update
-            _decoder.UpdateTime(_time);
-            if (TextureUpdater.AsyncSupport) _updater.RequestAsyncUpdate();
+            // Time clamping
+            var t = _loop ? _time : Mathf.Clamp(_time, 0, duration);
 
-            // Time advance
-            _time += Time.deltaTime * _speed;
-            if (!_loop) _time = Mathf.Clamp(_time, 0, (float)_demuxer.Duration);
+            // Determine if background decoding is available.
+            // Resync shouldn't happen. Not preferable in edit mode.
+            var bgdec = !resync && Application.isPlaying;
+
+            // Restart the stream reader on resync.
+            if (resync) _stream.Restart(t, _speed / 60);
+
+            if (TextureUpdater.AsyncSupport)
+            {
+                // Asynchronous texture update supported:
+                // Decode a frame and request a texture update.
+                if (bgdec) _decoder.UpdateAsync(t); else _decoder.UpdateSync(t);
+                _updater.RequestAsyncUpdate();
+            }
+            else if (bgdec)
+            {
+                // Synchronous texture update with background decoding:
+                // Update first, then start background decoding. This
+                // introduces a single frame delay but makes it possible to
+                // offload decoding load to a background thread.
+                _updater.UpdateNow();
+                _decoder.UpdateAsync(t);
+            }
+            else
+            {
+                // Synchronous decoding and texture update.
+                _decoder.UpdateSync(t);
+                _updater.UpdateNow();
+            }
+
+            // Update the stored time.
+            if (Application.isPlaying && !_externalTime)
+                _time += Time.deltaTime * _speed;
             _storedTime = _time;
 
             // External object updates
