@@ -220,6 +220,7 @@ namespace Klak.Hap
 
         public void GatherProperties(PlayableDirector director, IPropertyCollector driver)
         {
+            driver.AddFromName<HapPlayer>(gameObject, "_time");
         }
 
         #endregion
