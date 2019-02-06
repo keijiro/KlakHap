@@ -18,31 +18,41 @@ namespace Klak.Hap
         SerializedProperty _targetRenderer;
         SerializedProperty _targetMaterialProperty;
 
-        string _sourceInfo;
-
-        public string SourceInfo { get {
-            if (_sourceInfo != null) return _sourceInfo;
-
-            var player = (HapPlayer)target;
-            _sourceInfo = string.Format(
-                "{0}\n" +
-                "Codec: {1}\n" +
-                "Frame dimensions: {2} x {3}\n" +
-                "Stream duration: {4:0.00}\n" +
-                "Frame rate: {5:0.00}",
-                player.resolvedFilePath, player.codecType,
-                player.frameWidth, player.frameHeight,
-                player.streamDuration,
-                player.frameCount / player.streamDuration
-            );
-
-            return _sourceInfo;
-        } }
-        
         static class Labels
         {
             public static readonly GUIContent Property = new GUIContent("Property");
             public static readonly GUIContent Select = new GUIContent("Select");
+        }
+
+        string _sourceInfo;
+
+        void ShowSourceInfo(HapPlayer player)
+        {
+            if (!player.enabled || !player.gameObject.activeInHierarchy) return;
+
+            if (!player.isValid)
+            {
+                EditorGUILayout.HelpBox(
+                    "Failed to open file. " +
+                    "Please specify a valid HAP-encoded .mov file.",
+                    MessageType.Warning
+                );
+                return;
+            }
+
+            if (_sourceInfo == null)
+                _sourceInfo = string.Format(
+                    "Codec: {0}\n" +
+                    "Frame dimensions: {1} x {2}\n" +
+                    "Stream duration: {3:0.00}\n" +
+                    "Frame rate: {4:0.00}",
+                    player.codecType,
+                    player.frameWidth, player.frameHeight,
+                    player.streamDuration,
+                    player.frameCount / player.streamDuration
+                );
+
+            EditorGUILayout.HelpBox(_sourceInfo, MessageType.None);
         }
 
         void OnEnable()
@@ -61,18 +71,23 @@ namespace Klak.Hap
 
         public override void OnInspectorGUI()
         {
+            var reload = false;
+
             serializedObject.Update();
 
-            if (!Application.isPlaying)
+            // Source infomation
+            if (!_filePath.hasMultipleDifferentValues &&
+                !_pathMode.hasMultipleDifferentValues &&
+                !string.IsNullOrEmpty(_filePath.stringValue))
             {
-                // Source file
-                EditorGUILayout.PropertyField(_filePath);
-                EditorGUILayout.PropertyField(_pathMode);
+                ShowSourceInfo((HapPlayer)target);
             }
-            else if (targets.Length == 1)
-            {
-                EditorGUILayout.HelpBox(SourceInfo, MessageType.None);
-            }
+
+            // Source file
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.DelayedTextField(_filePath);
+            EditorGUILayout.PropertyField(_pathMode);
+            reload = EditorGUI.EndChangeCheck();
 
             // Playback control
             EditorGUILayout.PropertyField(_time);
@@ -99,6 +114,16 @@ namespace Klak.Hap
             EditorGUI.indentLevel--;
 
             serializedObject.ApplyModifiedProperties();
+
+            if (reload)
+            {
+                // This is a little bit scary hack but we can force a HapPlayer
+                // to reload a given video file by invoking OnDestroy.
+                foreach (HapPlayer hp in targets) hp.SendMessage("OnDestroy");
+
+                // Also the source information string should be refreshed.
+                _sourceInfo = null;
+            }
         }
     }
 }

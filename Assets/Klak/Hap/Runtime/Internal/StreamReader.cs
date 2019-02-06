@@ -98,19 +98,25 @@ namespace Klak.Hap
             // acquiring/releasing it for each operation.
             lock (_queueLock)
             {
-                // Scan the lead queue and free old frames.
+                // Scan the lead queue.
                 while (_leadQueue.Count > 0)
                 {
                     var peek = _leadQueue.Peek();
 
                     if (_current != null)
                     {
-                        // Break if the current frame is closer than the
-                        // peeked one.
-                        var dif_c = Math.Abs(_current.Time - time);
-                        var dif_n = Math.Abs(peek.Time - time);
-
-                        if (dif_c < dif_n) break;
+                        if (_current.Time <= peek.Time)
+                        {
+                            // Forward playback case:
+                            // Break if it hasn't reached the next frame.
+                            if (time < peek.Time) break;
+                        }
+                        else
+                        {
+                            // Reverse playback case:
+                            // Break if it's still on the current frame.
+                            if (_current.Time < time) break;
+                        }
 
                         // Free the current frame before replacing it.
                         _freeBuffers.Add(_current);
@@ -169,7 +175,7 @@ namespace Klak.Hap
             _restart = null;
 
             // Stream attributes
-            var totalTime = (float)_demuxer.Duration;
+            var totalTime = _demuxer.Duration;
             var totalFrames = _demuxer.FrameCount;
 
             while (true)
@@ -190,12 +196,15 @@ namespace Klak.Hap
                     _restart = null;
                 }
 
-                // Time wrapping
-                var wrappedTime = time % totalTime;
-                if (wrappedTime < 0) wrappedTime += totalTime;
+                // Time -> Frame count
+                var frameCount = Math.Floor(time * totalFrames / totalTime);
 
-                // Wrapped time -> frame number
-                var frameNumber = (int)(wrappedTime * totalFrames / totalTime);
+                // Frame count -> Frame snapped time
+                var snappedTime = (float)(frameCount * totalTime / totalFrames);
+
+                // Frame count -> Wrapped frame number
+                var frameNumber = (int)frameCount % totalFrames;
+                if (frameNumber < 0) frameNumber += totalFrames;
 
                 lock (_queueLock)
                 {
@@ -221,7 +230,7 @@ namespace Klak.Hap
                         // without reading frame data, the time field should
                         // be updated to handle wrapping-around hits.
                         _freeBuffers.Remove(buffer);
-                        buffer.Time = time;
+                        buffer.Time = snappedTime;
                     }
                     else
                     {
@@ -230,7 +239,7 @@ namespace Klak.Hap
                         _freeBuffers.RemoveAt(_freeBuffers.Count - 1);
 
                         // Frame data read
-                        _demuxer.ReadFrame(buffer, frameNumber, time);
+                        _demuxer.ReadFrame(buffer, frameNumber, snappedTime);
                     }
 
                     // Push the buffer to the lead queue.
