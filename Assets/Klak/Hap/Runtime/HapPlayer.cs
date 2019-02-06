@@ -120,7 +120,8 @@ namespace Klak.Hap
             {
                 if (Application.isPlaying)
                 {
-                    // In play mode, show an error message and disable itself.
+                    // In play mode, show an error message, then disable itself
+                    // to prevent spamming the console.
                     Debug.LogError("Failed to open stream (" + resolvedFilePath + ").");
                     enabled = false;
                 }
@@ -187,23 +188,30 @@ namespace Klak.Hap
 
         #endregion
 
-        #region ITimeControl functions
+        #region ITimeControl implementation
 
-        float _externalTime = -1;
+        bool _externalTime;
 
         public void OnControlTimeStart()
         {
-            _externalTime = 0;
+            _externalTime = true;
+
+            // In the external time mode, we can't know the actual playback
+            // speed but only know that it's positive (Control Track doesn't
+            // support reverse playback), so we assume that the speed is 1.0.
+            // Cons: Resync happens every frame for high speed play back.
+            _speed = 1;
         }
 
         public void OnControlTimeStop()
         {
-            _externalTime = -1;
+            _externalTime = false;
         }
 
         public void SetTime(double time)
         {
-            _externalTime = (float)time;
+            _time = (float)time;
+            _speed = 1;
         }
 
         #endregion
@@ -257,40 +265,25 @@ namespace Klak.Hap
             // Do nothing if the demuxer hasn't been instantiated.
             if (_demuxer == null) return;
 
-            float t, dt;
-            bool resync = false;
+            var duration = (float)_demuxer.Duration;
 
-            // Detect speed changes; Resync is needed on them.
+            // Check if _time is in the same frame of _storedTime.
+            // Resync is needed when it went out of the frame.
+            var dt = duration / _demuxer.FrameCount;
+            var resync = _time < _storedTime || _time > _storedTime + dt;
+
+            // Check if the speed was externally modified.
             if (_speed != _storedSpeed)
             {
-                resync = true;
+                resync = true; // Resync to adapt to the new speed.
                 _storedSpeed = _speed;
             }
 
-            if (_externalTime < 0)
-            {
-                // Internal time mode
-                t = _time;
-                dt = _speed / 60;
-
-                // Resync if the time parameter was externally modified.
-                resync = _time != _storedTime;
-            }
-            else
-            {
-                // External time (timeline) mode
-                t = _externalTime;
-                dt = (float)(_demuxer.Duration / _demuxer.FrameCount * _speed);
-
-                // Resync if the time is not in [t_prev, t_prev + dt].
-                resync = t < _storedTime || t > _storedTime + dt;
-            }
-
-            // Non-loop time clamping
-            if (!_loop) t = Mathf.Clamp(t, 0, (float)_demuxer.Duration);
+            // Time clamping
+            float t = _loop ? _time : Mathf.Clamp(_time, 0, duration);
 
             // Restart the stream reader on resync.
-            if (resync) _stream.Restart(t, dt);
+            if (resync) _stream.Restart(t, _speed / 60);
 
             if (TextureUpdater.AsyncSupport)
             {
@@ -299,33 +292,27 @@ namespace Klak.Hap
                 if (resync) _decoder.UpdateSync(t); else _decoder.UpdateAsync(t);
                 _updater.RequestAsyncUpdate();
             }
-            else if (resync)
+            else if (resync || !Application.isPlaying)
             {
-                // Sync point:
-                // Decode, wait and update.
+                // Sync update (resync happened / in edit mode):
+                // Decode and wait, then update.
                 _decoder.UpdateSync(t);
                 _updater.UpdateNow();
             }
             else
             {
-                // Non-sync point:
-                // Update first, then decode asynchronously. This introduces a
-                // single frame delay.
+                // Non-sync update:
+                // Update first, then decode asynchronously. This introduces
+                // a single frame delay but makes it possible to offloading
+                // decoding load to a background thread.
                 _updater.UpdateNow();
                 _decoder.UpdateAsync(t);
             }
 
-            if (_externalTime < 0)
-            {
-                // Internal time mode: Advance the time while play mode.
-                if (Application.isPlaying) _time += Time.deltaTime * _speed;
-                _storedTime = _time;
-            }
-            else
-            {
-                // External time mode: Simply store the external time value.
-                _storedTime = _externalTime;
-            }
+            // Update the stored time.
+            if (Application.isPlaying && !_externalTime)
+                _time += Time.deltaTime * _speed;
+            _storedTime = _time;
 
             // External object updates
             UpdateTargetRenderer();

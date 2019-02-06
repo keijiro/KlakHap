@@ -26,14 +26,15 @@ namespace Klak.Hap
 
         string _sourceInfo;
 
-        void ShowSourceInfoBox()
+        void ShowSourceInfo(HapPlayer player)
         {
-            var player = (HapPlayer)target;
+            if (!player.enabled || !player.gameObject.activeInHierarchy) return;
 
             if (!player.isValid)
             {
                 EditorGUILayout.HelpBox(
-                    "Failed to open file. Please specify a valid HAP-encoded .mov file.",
+                    "Failed to open file. " +
+                    "Please specify a valid HAP-encoded .mov file.",
                     MessageType.Warning
                 );
                 return;
@@ -74,12 +75,12 @@ namespace Klak.Hap
 
             serializedObject.Update();
 
-            // Source infomation box
+            // Source infomation
             if (!_filePath.hasMultipleDifferentValues &&
                 !_pathMode.hasMultipleDifferentValues &&
                 !string.IsNullOrEmpty(_filePath.stringValue))
             {
-                ShowSourceInfoBox();
+                ShowSourceInfo((HapPlayer)target);
             }
 
             // Source file
