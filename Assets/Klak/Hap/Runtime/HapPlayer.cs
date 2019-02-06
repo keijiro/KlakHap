@@ -280,33 +280,36 @@ namespace Klak.Hap
             }
 
             // Time clamping
-            float t = _loop ? _time : Mathf.Clamp(_time, 0, duration);
+            var t = _loop ? _time : Mathf.Clamp(_time, 0, duration);
+
+            // Determine if background decoding is available.
+            // Resync shouldn't happen. Not preferable in edit mode.
+            var bgdec = !resync && Application.isPlaying;
 
             // Restart the stream reader on resync.
             if (resync) _stream.Restart(t, _speed / 60);
 
             if (TextureUpdater.AsyncSupport)
             {
-                // Async texture update supported:
-                // Decode (sync if needed) and request update.
-                if (resync) _decoder.UpdateSync(t); else _decoder.UpdateAsync(t);
+                // Asynchronous texture update supported:
+                // Decode a frame and request a texture update.
+                if (bgdec) _decoder.UpdateAsync(t); else _decoder.UpdateSync(t);
                 _updater.RequestAsyncUpdate();
             }
-            else if (resync || !Application.isPlaying)
+            else if (bgdec)
             {
-                // Sync update (resync happened, or it's in edit mode):
-                // Decode and wait, then update.
-                _decoder.UpdateSync(t);
+                // Synchronous texture update with background decoding:
+                // Update first, then start background decoding. This
+                // introduces a single frame delay but makes it possible to
+                // offload decoding load to a background thread.
                 _updater.UpdateNow();
+                _decoder.UpdateAsync(t);
             }
             else
             {
-                // Non-sync update:
-                // Update first, then decode asynchronously. This introduces
-                // a single frame delay but makes it possible to offloading
-                // decoding load to a background thread.
+                // Synchronous decoding and texture update.
+                _decoder.UpdateSync(t);
                 _updater.UpdateNow();
-                _decoder.UpdateAsync(t);
             }
 
             // Update the stored time.

@@ -115,7 +115,7 @@ namespace Klak.Hap
                         {
                             // Reverse playback case:
                             // Break if it's still on the current frame.
-                            if (_current.Time <= time) break;
+                            if (_current.Time < time) break;
                         }
 
                         // Free the current frame before replacing it.
