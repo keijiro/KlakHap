@@ -175,7 +175,7 @@ namespace Klak.Hap
             _restart = null;
 
             // Stream attributes
-            var totalTime = (float)_demuxer.Duration;
+            var totalTime = _demuxer.Duration;
             var totalFrames = _demuxer.FrameCount;
 
             while (true)
@@ -196,16 +196,15 @@ namespace Klak.Hap
                     _restart = null;
                 }
 
-                // Time wrapping
-                var wrappedTime = time % totalTime;
-                if (wrappedTime < 0) wrappedTime += totalTime;
+                // Time -> Frame count
+                var frameCount = Math.Floor(time * totalFrames / totalTime);
 
-                // Wrapped time -> frame number
-                var frameNumber = (int)(wrappedTime * totalFrames / totalTime);
+                // Frame count -> Frame snapped time
+                var snappedTime = (float)(frameCount * totalTime / totalFrames);
 
-                // Frame snapped time
-                var snappedTime = (float)(int)(time * totalFrames / totalTime);
-                snappedTime *= totalTime / totalFrames;
+                // Frame count -> Wrapped frame number
+                var frameNumber = (int)frameCount % totalFrames;
+                if (frameNumber < 0) frameNumber += totalFrames;
 
                 lock (_queueLock)
                 {

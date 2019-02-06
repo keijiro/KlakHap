@@ -197,9 +197,9 @@ namespace Klak.Hap
             _externalTime = true;
 
             // In the external time mode, we can't know the actual playback
-            // speed but only know that it's positive (Control Track doesn't
-            // support reverse playback), so we assume that the speed is 1.0.
-            // Cons: Resync happens every frame for high speed play back.
+            // speed but sure that it's positive (Control Track doesn't support
+            // reverse playback), so we assume that the speed is 1.0.
+            // Cons: Resync could happen every frame for high speed play back.
             _speed = 1;
         }
 
@@ -267,7 +267,7 @@ namespace Klak.Hap
 
             var duration = (float)_demuxer.Duration;
 
-            // Check if _time is in the same frame of _storedTime.
+            // Check if _time is still in the same frame of _storedTime.
             // Resync is needed when it went out of the frame.
             var dt = duration / _demuxer.FrameCount;
             var resync = _time < _storedTime || _time > _storedTime + dt;
@@ -294,7 +294,7 @@ namespace Klak.Hap
             }
             else if (resync || !Application.isPlaying)
             {
-                // Sync update (resync happened / in edit mode):
+                // Sync update (resync happened, or it's in edit mode):
                 // Decode and wait, then update.
                 _decoder.UpdateSync(t);
                 _updater.UpdateNow();
