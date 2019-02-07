@@ -120,3 +120,17 @@ properties/methods to control playback instead.
 - To stop: Assign `false` to `enabled`.
 - To close the video file: Destroy the `HapPlayer` component.
 - To open another video file: `AddComponent<HapPlayer>` then call `Open`.
+
+Timeline support
+----------------
+
+![GIF](https://i.imgur.com/efrvvye.gif)
+
+The HAP Player component implements the [ITimeControl] interface that makes
+it able to control the playback time from a Control Track in a [Timeline].
+You can easily create a control track with drag-and-dropping a HAP Player
+game object into the Timeline Editor, or manually create a Control Track/Clip
+and set the source game object.
+
+[ITimeControl]: https://docs.unity3d.com/ScriptReference/Timeline.ITimeControl.html
+[Timeline]: https://docs.unity3d.com/Manual/TimelineSection.html
