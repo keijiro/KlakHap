@@ -4,6 +4,13 @@
 #include "ReadBuffer.h"
 #include "IUnityRenderingExtensions.h"
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <consoleapi.h>
+#endif
+
 using namespace KlakHap;
 
 namespace
@@ -70,6 +77,18 @@ namespace
 }
 
 #pragma region Plugin common function
+
+#if defined(_WIN32) && defined(_DEBUG)
+
+extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnityInterfaces* interfaces)
+{
+    // Open a new console for debug logging.
+    FILE * pConsole;
+    AllocConsole();
+    freopen_s(&pConsole, "CONOUT$", "wb", stdout);
+}
+
+#endif
 
 extern "C" UnityRenderingEventAndData UNITY_INTERFACE_EXPORT KlakHap_GetTextureUpdateCallback()
 {

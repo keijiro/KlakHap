@@ -91,7 +91,7 @@ namespace KlakHap
         )
         {
             // FIXME: This should be threaded.
-            for (auto i = 0; i < count; i++) work(p, i);
+            for (auto i = 0u; i < count; i++) work(p, i);
         }
 
         #pragma endregion

@@ -76,7 +76,11 @@ namespace KlakHap
             auto inOffs = MP4D__frame_offset(&demux_, 0, index, &inSize, &timestamp, &duration);
 
             // Frame data read
-            fseek(file_, (long)inOffs, SEEK_SET);
+        #if defined(_WIN32)
+            _fseeki64(file_, inOffs, SEEK_SET);
+        #else
+            fseek(file_, inOffs, SEEK_SET);
+        #endif
             buffer.storage.resize(inSize);
             fread(buffer.storage.data(), inSize, 1, file_);
         }
