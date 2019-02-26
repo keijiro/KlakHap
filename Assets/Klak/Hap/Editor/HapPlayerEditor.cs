@@ -119,7 +119,11 @@ namespace Klak.Hap
             {
                 // This is a little bit scary hack but we can force a HapPlayer
                 // to reload a given video file by invoking OnDestroy.
-                foreach (HapPlayer hp in targets) hp.SendMessage("OnDestroy");
+                foreach (HapPlayer hp in targets)
+                {
+                    hp.SendMessage("OnDestroy");
+                    hp.SendMessage("LateUpdate");
+                }
 
                 // Also the source information string should be refreshed.
                 _sourceInfo = null;
