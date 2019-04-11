@@ -41,7 +41,7 @@ namespace Klak.Hap
         {
             switch (videoType & 0xf)
             {
-                case 0xe: return Shader.Find("Klak/HAP Alpha");
+                case 0xe: return Shader.Find("Klak/HAP Alpha RT");
                 case 0xf: return Shader.Find("Klak/HAP Q");
             }
             return Shader.Find("Klak/HAP");

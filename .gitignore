@@ -8,6 +8,8 @@ Desktop.ini
 # Code Editors
 /.idea
 /.vscode
+/.vs
+/obj
 /*.csproj
 /*.sln
 *.swp
@@ -16,6 +18,7 @@ Desktop.ini
 # Unity
 /Library
 /Temp
+/Logs
 
 # Visual Studio
 /Plugin/Windows/.vs
