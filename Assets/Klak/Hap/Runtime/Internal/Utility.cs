@@ -37,14 +37,12 @@ namespace Klak.Hap
             return TextureFormat.DXT1;
         }
 
-        public static Shader DetermineShader(int videoType)
+        public static Shader DetermineBlitShader(int videoType)
         {
-            switch (videoType & 0xf)
-            {
-                case 0xe: return Shader.Find("Klak/HAP Alpha");
-                case 0xf: return Shader.Find("Klak/HAP Q");
-            }
-            return Shader.Find("Klak/HAP");
+            if ((videoType & 0xf) == 0xf)
+                return Shader.Find("Klak/HAP Q");
+            else
+                return Shader.Find("Klak/HAP");
         }
     }
 }

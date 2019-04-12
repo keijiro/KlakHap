@@ -164,7 +164,7 @@ namespace Klak.Hap
             // Material lazy initialization
             if (_blitMaterial == null)
             {
-                _blitMaterial = new Material(Utility.DetermineShader(_demuxer.VideoType));
+                _blitMaterial = new Material(Utility.DetermineBlitShader(_demuxer.VideoType));
                 _blitMaterial.hideFlags = HideFlags.DontSave;
             }
 
