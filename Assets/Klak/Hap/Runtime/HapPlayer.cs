@@ -281,7 +281,7 @@ namespace Klak.Hap
             }
 
             // Time clamping
-            var t = _loop ? _time : Mathf.Clamp(_time, 0, duration);
+            var t = _loop ? _time : Mathf.Clamp(_time, 0, duration - 1e-4f);
 
             // Determine if background decoding is available.
             // Resync shouldn't happen. Not preferable in edit mode.
