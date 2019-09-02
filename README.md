@@ -44,19 +44,28 @@ Installation
 
 Download and import one of the `.unitypackage` files from [Releases] page.
 
-You can also use [Git support on Package Manager] to import the package. Add
-the following line to the `dependencies` section in the package manifest file
-(`Packages/manifest.json`). Note that this feature is only available from
-Unity 2018.3. See [the forum thread][Git support on Package Manager] for
-further details.
+You can also use the [scoped registry] feature to import the package. Add the
+following sections to the package manifest file (`Packages/manifest.json`).
+
+To the `scopedRegistries` section:
 
 ```
-"jp.keijiro.klak.hap": "https://github.com/keijiro/KlakHap.git#upm"
+{
+  "name": "Keijiro",
+  "url": "https://registry.npmjs.com",
+  "scopes": [ "jp.keijiro" ]
+}
+```
+
+To the `dependencies` section:
+
+```
+"jp.keijiro.klak.hap": "0.1.13"
 ```
 
 [Releases]: https://github.com/keijiro/KlakHap/releases
-[Git support on Package Manager]:
-  https://forum.unity.com/threads/git-support-on-package-manager.573673/
+[scoped registry]:
+  https://docs.unity3d.com/Manual/upm-scoped.html
 
 How to specify a video file
 ---------------------------
