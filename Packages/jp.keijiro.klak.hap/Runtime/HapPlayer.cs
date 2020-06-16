@@ -1,11 +1,18 @@
 using UnityEngine;
 using UnityEngine.Playables;
+
+#if KLAKHAP_HAS_TIMELINE
 using UnityEngine.Timeline;
+#endif
 
 namespace Klak.Hap
 {
     [ExecuteInEditMode, AddComponentMenu("Klak/HAP/HAP Player")]
-    public sealed class HapPlayer : MonoBehaviour, ITimeControl, IPropertyPreview
+    #if KLAKHAP_HAS_TIMELINE
+    public sealed class HapPlayer : MonoBehaviour , ITimeControl, IPropertyPreview
+    #else
+    public sealed class HapPlayer : MonoBehaviour
+    #endif
     {
         #region Editable attributes
 
@@ -218,10 +225,12 @@ namespace Klak.Hap
 
         #region IPropertyPreview implementation
 
+        #if KLAKHAP_HAS_TIMELINE
         public void GatherProperties(PlayableDirector director, IPropertyCollector driver)
         {
             driver.AddFromName<HapPlayer>(gameObject, "_time");
         }
+        #endif
 
         #endregion
 
