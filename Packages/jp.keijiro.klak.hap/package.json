@@ -1,0 +1,13 @@
+{
+    "author": "Keijiro Takahashi",
+    "dependencies": { },
+    "description": "HAP video player",
+    "displayName": "KlakHAP",
+    "keywords": [ "unity" ],
+    "license": "SEE LICENSE IN LICENSE",
+    "name": "jp.keijiro.klak.hap",
+    "repository": "github:keijiro/KlakHap",
+    "unity": "2019.3",
+    "unityRelease": "4f0",
+    "version": "0.1.15"
+}
