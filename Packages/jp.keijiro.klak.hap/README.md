@@ -25,7 +25,7 @@ time/speed without any hiccups.
 System requirements
 -------------------
 
-- Unity 2018.3 or later
+- Unity 2019.4 or later
 
 At the moment, KlakHAP only supports 64-bit desktop platforms (Windows, macOS
 and Linux).
@@ -42,21 +42,43 @@ it only supports `.mov` files.
 Installation
 ------------
 
-Download and import one of the `.unitypackage` files from [Releases] page.
+This package uses the [scoped registry] feature to resolve package
+dependencies. Please add the following sections to the manifest file
+(Packages/manifest.json).
 
-You can also use [Git support on Package Manager] to import the package. Add
-the following line to the `dependencies` section in the package manifest file
-(`Packages/manifest.json`). Note that this feature is only available from
-Unity 2018.3. See [the forum thread][Git support on Package Manager] for
-further details.
+[scoped registry]: https://docs.unity3d.com/Manual/upm-scoped.html
+
+To the `scopedRegistries` section:
 
 ```
-"jp.keijiro.klak.hap": "https://github.com/keijiro/KlakHap.git#upm"
+{
+  "name": "Keijiro",
+  "url": "https://registry.npmjs.com",
+  "scopes": [ "jp.keijiro" ]
+}
 ```
 
-[Releases]: https://github.com/keijiro/KlakHap/releases
-[Git support on Package Manager]:
-  https://forum.unity.com/threads/git-support-on-package-manager.573673/
+To the `dependencies` section:
+
+```
+"jp.keijiro.klak.hap": "0.1.16"
+```
+
+After changes, the manifest file should look like below:
+
+```
+{
+  "scopedRegistries": [
+    {
+      "name": "Keijiro",
+      "url": "https://registry.npmjs.com",
+      "scopes": [ "jp.keijiro" ]
+    }
+  ],
+  "dependencies": {
+    "jp.keijiro.klak.hap": "0.1.16",
+    ...
+```
 
 How to specify a video file
 ---------------------------

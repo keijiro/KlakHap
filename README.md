@@ -25,7 +25,7 @@ time/speed without any hiccups.
 System requirements
 -------------------
 
-- Unity 2018.3 or later
+- Unity 2019.4 or later
 
 At the moment, KlakHAP only supports 64-bit desktop platforms (Windows, macOS
 and Linux).
@@ -42,10 +42,11 @@ it only supports `.mov` files.
 Installation
 ------------
 
-Download and import one of the `.unitypackage` files from [Releases] page.
+This package uses the [scoped registry] feature to resolve package
+dependencies. Please add the following sections to the manifest file
+(Packages/manifest.json).
 
-You can also use the [scoped registry] feature to import the package. Add the
-following sections to the package manifest file (`Packages/manifest.json`).
+[scoped registry]: https://docs.unity3d.com/Manual/upm-scoped.html
 
 To the `scopedRegistries` section:
 
@@ -60,12 +61,24 @@ To the `scopedRegistries` section:
 To the `dependencies` section:
 
 ```
-"jp.keijiro.klak.hap": "0.1.13"
+"jp.keijiro.klak.hap": "0.1.16"
 ```
 
-[Releases]: https://github.com/keijiro/KlakHap/releases
-[scoped registry]:
-  https://docs.unity3d.com/Manual/upm-scoped.html
+After changes, the manifest file should look like below:
+
+```
+{
+  "scopedRegistries": [
+    {
+      "name": "Keijiro",
+      "url": "https://registry.npmjs.com",
+      "scopes": [ "jp.keijiro" ]
+    }
+  ],
+  "dependencies": {
+    "jp.keijiro.klak.hap": "0.1.16",
+    ...
+```
 
 How to specify a video file
 ---------------------------
