@@ -197,13 +197,19 @@ namespace Klak.Hap
                 }
 
                 // Time -> Frame count
-                var frameCount = Math.Floor(time * totalFrames / totalTime);
+                // Rounding strategy: We don't prefer Math.Round because it can
+                // show a frame before the playhead reaches it (especially when
+                // using slow-mo). On the other hand, Math.Floor causes frame
+                // skipping due to rounding errors. To avoid these problems,
+                // we use the "adding a very-very small fractional frame"
+                // approach. 1/1000 might be safe and enough for all the cases.
+                var frameCount = (int)(time * totalFrames / totalTime + 1e-3f);
 
                 // Frame count -> Frame snapped time
                 var snappedTime = (float)(frameCount * totalTime / totalFrames);
 
                 // Frame count -> Wrapped frame number
-                var frameNumber = (int)frameCount % totalFrames;
+                var frameNumber = frameCount % totalFrames;
                 if (frameNumber < 0) frameNumber += totalFrames;
 
                 lock (_queueLock)
