@@ -115,7 +115,7 @@ property. Although it's the most performant way to render video frames, it
 needs a few additional steps to be rendered correctly. The following points
 should be taken into account:
 
-- UV coordinates incompatibility: Decoded textures will be upside-down due to
+- UV coordinate incompatibility: Decoded textures will be upside-down due to
   the difference in the UV coordinates conventions between Unity and HAP. It can
   be fixed using a vertically-inverted texture scale/offset. You can also use
   the `Klak/Hap` shader for this purpose.
