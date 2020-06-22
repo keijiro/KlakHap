@@ -116,7 +116,7 @@ needs a few additional steps to be rendered correctly. The following points
 should be taken into account:
 
 - UV coordinates incompatibility: Decoded textures will be upside-down due to
-  the difference in the UV coodinate conventions between Unity and HAP. It can
+  the difference in the UV coordinates conventions between Unity and HAP. It can
   be fixed using a vertically-inverted texture scale/offset. You can also use
   the `Klak/Hap` shader for this purpose.
 - Color space conversion for HAP Q: [YCoCg conversion] must be added to a
