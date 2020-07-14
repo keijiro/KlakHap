@@ -91,6 +91,9 @@ namespace Klak.Hap
 
         public ReadBuffer Advance(float time)
         {
+            // Add an epsilon-ish value to avoid rounding error.
+            time += 1e-6f;
+
             var changed = false;
 
             // There is no slow path in this function, so we prefer holding
