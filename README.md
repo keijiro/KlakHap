@@ -61,7 +61,7 @@ To the `scopedRegistries` section:
 To the `dependencies` section:
 
 ```
-"jp.keijiro.klak.hap": "0.1.16"
+"jp.keijiro.klak.hap": "0.1.17"
 ```
 
 After changes, the manifest file should look like below:
@@ -76,7 +76,7 @@ After changes, the manifest file should look like below:
     }
   ],
   "dependencies": {
-    "jp.keijiro.klak.hap": "0.1.16",
+    "jp.keijiro.klak.hap": "0.1.17",
     ...
 ```
 
