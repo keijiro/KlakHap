@@ -21,7 +21,8 @@ namespace Klak.Hap
             _time = 0;
 
             // Decoder thread startup
-            _resume = new AutoResetEvent(true);
+            _resume.req = new AutoResetEvent(true);
+            _resume.ack = new AutoResetEvent(false);
             _thread = new Thread(DecoderThread);
             _thread.Start();
         }
@@ -31,7 +32,7 @@ namespace Klak.Hap
             if (_thread != null)
             {
                 _terminate = true;
-                _resume.Set();
+                _resume.req.Set();
                 _thread.Join();
                 _thread = null;
             }
@@ -65,7 +66,8 @@ namespace Klak.Hap
         public void UpdateAsync(float time)
         {
             _time = time;
-            _resume.Set();
+            _resume.req.Set();
+            _resume.ack.WaitOne();
         }
 
         public IntPtr LockBuffer()
@@ -88,7 +90,7 @@ namespace Klak.Hap
         uint _id;
 
         Thread _thread;
-        AutoResetEvent _resume;
+        (AutoResetEvent req, AutoResetEvent ack) _resume;
         bool _terminate;
 
         StreamReader _stream;
@@ -102,7 +104,8 @@ namespace Klak.Hap
         {
             while (true)
             {
-                _resume.WaitOne();
+                _resume.req.WaitOne();
+                _resume.ack.Set();
 
                 if (_terminate) break;
 
