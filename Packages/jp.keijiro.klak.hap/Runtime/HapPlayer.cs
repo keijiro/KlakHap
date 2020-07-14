@@ -306,6 +306,7 @@ namespace Klak.Hap
                 if (bgdec) _decoder.UpdateAsync(t); else _decoder.UpdateSync(t);
                 _updater.RequestAsyncUpdate();
             }
+            #if !HAP_NO_DELAY
             else if (bgdec)
             {
                 // Synchronous texture update with background decoding:
@@ -315,6 +316,7 @@ namespace Klak.Hap
                 _updater.UpdateNow();
                 _decoder.UpdateAsync(t);
             }
+            #endif
             else
             {
                 // Synchronous decoding and texture update.
