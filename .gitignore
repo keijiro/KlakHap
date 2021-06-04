@@ -14,8 +14,10 @@ Desktop.ini
 *.vcxproj.user
 
 # Unity
-/Logs
 /Library
+/Logs
+/Recordings
+/UserSettings
 /Temp
 
 # Visual Studio

@@ -1,7 +1,6 @@
 {
   "dependencies": {
-    "com.unity.timeline": "1.4.1",
-    "com.unity.ugui": "1.0.0",
-    "com.unity.modules.uielements": "1.0.0"
+    "com.unity.timeline": "1.4.8",
+    "com.unity.ugui": "1.0.0"
   }
 }
