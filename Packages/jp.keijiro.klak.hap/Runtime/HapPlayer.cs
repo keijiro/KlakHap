@@ -104,6 +104,9 @@ namespace Klak.Hap
             OpenInternal();
         }
 
+        public void UpdateNow()
+          => LateUpdate();
+
         #endregion
 
         #region Private members
@@ -266,8 +269,14 @@ namespace Klak.Hap
             Utility.Destroy(_blitMaterial);
         }
 
+        int _lastUpdateFrameCount = -1;
+
         void LateUpdate()
         {
+            // Double update check
+            if (Time.frameCount == _lastUpdateFrameCount) return;
+            _lastUpdateFrameCount = Time.frameCount;
+
             // Lazy initialization of demuxer
             if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
                 OpenInternal();
