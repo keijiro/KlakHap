@@ -156,3 +156,34 @@ and set the source game object.
 
 [ITimeControl]: https://docs.unity3d.com/ScriptReference/Timeline.ITimeControl.html
 [Timeline]: https://docs.unity3d.com/Manual/TimelineSection.html
+
+Platform differences (internal latency)
+----------------------------------------
+
+On Windows, KlakHAP uses the [Custom Texture Update] feature to hide the
+synchronization point in the background thread. It guarantees exact-frame
+playback with minimum load on the main thread.
+
+On macOS and Linux, the Custom Texture Update feature for this purpose is
+unavailable[^1]. Instead, KlakHAP delays synchronization to the successive
+frame to avoid main thread stalls. In other words, it guarantees exact-frame
+playback but with a single-frame latency.
+
+You can turn off this behavior by adding `HAP_NO_DELAY` to the
+[Scripting Define Symbols] in the project settings. It stalls the main thread
+for every frame decoding. It would significantly slow down the application but
+is useful when exact frame matching is essential (e.g.,
+[volumetric video playback] with Alembic animation).
+
+[Custom Texture Update]:
+  https://github.com/keijiro/TextureUpdateExample
+
+[Scripting Define Symbols]:
+  https://docs.unity3d.com/Manual/CustomScriptingSymbols.html
+
+[volumetric video playback]:
+  https://github.com/keijiro/Abcvfx
+
+[^1]: The Custom Texture Update feature is available even on macOS/Linux but
+      doesn't support compressed texture formats, which are essential for HAP
+      decoding.
