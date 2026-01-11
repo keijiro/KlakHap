@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "com.unity.timeline": "1.4.8",
-    "com.unity.ugui": "1.0.0"
+    "com.unity.inputsystem": "1.17.0",
+    "com.unity.timeline": "1.8.10",
+    "com.unity.ugui": "2.0.0"
   }
 }
