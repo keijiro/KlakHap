@@ -5,6 +5,10 @@
 #include "mp4demux.h"
 #include "ReadBuffer.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace KlakHap
 {
     class Demuxer
@@ -17,8 +21,19 @@ namespace KlakHap
         {
             std::memset(&demux_, 0, sizeof(MP4D_demux_t));
 
-        #ifdef _MSC_VER
-            if (fopen_s(&file_, path, "rb") != 0) return;
+        #ifdef _WIN32
+            // Convert UTF-8 to wide character for Windows
+            int wlen = MultiByteToWideChar(CP_UTF8, 0, path, -1, nullptr, 0);
+            if (wlen <= 0) return;
+            
+            wchar_t* wpath = new wchar_t[wlen];
+            MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, wlen);
+            
+            if (_wfopen_s(&file_, wpath, L"rb") != 0) {
+                delete[] wpath;
+                return;
+            }
+            delete[] wpath;
         #else
             file_ = fopen(path, "rb");
             if (file_ == nullptr) return;

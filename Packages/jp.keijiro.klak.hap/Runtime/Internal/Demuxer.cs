@@ -71,8 +71,8 @@ namespace Klak.Hap
 
         #region Native plugin entry points
 
-        [DllImport("KlakHap")]
-        internal static extern IntPtr KlakHap_OpenDemuxer(string filepath);
+        [DllImport("KlakHap", CharSet = CharSet.Ansi)]
+        internal static extern IntPtr KlakHap_OpenDemuxer([MarshalAs(UnmanagedType.LPUTF8Str)] string filepath);
 
         [DllImport("KlakHap")]
         internal static extern void KlakHap_CloseDemuxer(IntPtr demuxer);
