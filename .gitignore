@@ -31,3 +31,4 @@ xcshareddata
 /Plugin/MacOS/arm64
 /Plugin/MacOS/x86_64
 /Plugin/MacOS/*.bundle
+/*.tgz

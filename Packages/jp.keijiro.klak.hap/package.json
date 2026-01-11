@@ -1,13 +1,14 @@
 {
-    "author": "Keijiro Takahashi",
-    "dependencies": { },
-    "description": "HAP video player",
-    "displayName": "KlakHAP",
-    "keywords": [ "unity" ],
-    "license": "SEE LICENSE IN LICENSE",
-    "name": "jp.keijiro.klak.hap",
-    "repository": "github:keijiro/KlakHap",
-    "unity": "2019.3",
-    "unityRelease": "4f0",
-    "version": "0.1.20"
+  "name": "jp.keijiro.klak.hap",
+  "version": "0.1.20",
+  "displayName": "KlakHAP",
+  "description": "HAP video player",
+  "unity": "2019.3",
+  "author": "Keijiro Takahashi",
+  "dependencies": { },
+  "changelogUrl": "https://github.com/keijiro/KlakHap/blob/master/CHANGELOG.md",
+  "documentationUrl": "https://github.com/keijiro/KlakHap",
+  "licensesUrl": "https://github.com/keijiro/KlakHap/blob/master/LICENSE",
+  "license": "SEE LICENSE IN LICENSE",
+  "_upm": { "changelog": "" }
 }
