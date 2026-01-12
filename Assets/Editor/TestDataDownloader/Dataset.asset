@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5acc6266be6eb4130afc5134ec35fcec, type: 3}
-  m_Name: TestDataList
-  m_EditorClassIdentifier: Assembly-CSharp-Editor::TestDataList
+  m_Name: Dataset
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::TestDataDownloader.Dataset
   <SourceUrls>k__BackingField:
   - https://huggingface.co/keijiro-tk/test-videos/resolve/main/beeple_cleanroom_fhd_hap.mov
   - https://huggingface.co/keijiro-tk/test-videos/resolve/main/beeple_fiber_optical_fhd_hap.mov

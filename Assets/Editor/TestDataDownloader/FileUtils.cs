@@ -2,7 +2,9 @@ using System;
 using System.IO;
 using UnityEngine;
 
-public static class TestDataUtils
+namespace TestDataDownloader {
+
+static class FileUtils
 {
     public static string UrlToFilename(string url)
     {
@@ -17,3 +19,5 @@ public static class TestDataUtils
     public static string GetTemporaryPath(string filename)
       => Path.Combine(Application.temporaryCachePath, filename);
 }
+
+} // namespace TestDataDownloader

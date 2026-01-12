@@ -5,34 +5,42 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
 
-sealed class TestDataDownloaderWindow : EditorWindow
-{
-    [SerializeField] TestDataList _testDataList = null;
+namespace TestDataDownloader {
 
-    readonly HashSet<string> _activeDownloads = new HashSet<string>();
+sealed class MissingFileListWindow : EditorWindow
+{
+    [SerializeField] Dataset _dataset = null;
 
     public static void TryShowWindow()
     {
-        var window = GetWindow<TestDataDownloaderWindow>(true, "Missing Test Files");
-        window.minSize = new Vector2(400, 200);
+        var window = GetWindow<MissingFileListWindow>(true, "Missing Test Files");
+        window.minSize = window.maxSize = new Vector2(400, 200);
     }
 
     void OnGUI()
     {
-        var missingUrls = _testDataList.MissingFileUrls;
+        var missingUrls = _dataset.MissingFileUrls;
+
+        // Close immediately if there are no missing files.
         if (missingUrls.Length == 0)
         {
             Close();
             return;
         }
 
+        // Message label
         EditorGUILayout.Space(12);
         EditorGUILayout.LabelField("Some test files are missing.");
 
+        // Missing file list
         EditorGUILayout.Space(8);
         DrawFileList(missingUrls);
     }
 
+    // HashSet to track active downloads
+    readonly HashSet<string> _activeDownloads = new HashSet<string>();
+
+    // Missing file list along with download buttons
     void DrawFileList(string[] urls)
     {
         foreach (var url in urls)
@@ -44,7 +52,7 @@ sealed class TestDataDownloaderWindow : EditorWindow
             EditorGUILayout.BeginHorizontal();
 
             // Filename label
-            EditorGUILayout.LabelField(TestDataUtils.UrlToFilename(url));
+            EditorGUILayout.LabelField(FileUtils.UrlToFilename(url));
 
             // Download button
             EditorGUI.BeginDisabledGroup(isActive);
@@ -55,15 +63,17 @@ sealed class TestDataDownloaderWindow : EditorWindow
         }
     }
 
+    // Asynchronous file download method
     async void DownloadAsync(string url)
     {
         if (!_activeDownloads.Add(url)) return;
 
-        var filename = TestDataUtils.UrlToFilename(url);
-        var path = TestDataUtils.GetDestinationPath(filename);
-        var tempPath = TestDataUtils.GetTemporaryPath(filename);
+        var filename = FileUtils.UrlToFilename(url);
+        var destPath = FileUtils.GetDestinationPath(filename);
+        var tempPath = FileUtils.GetTemporaryPath(filename);
 
         var success = false;
+
         using (var request = UnityWebRequest.Get(url))
         {
             request.downloadHandler = new DownloadHandlerFile(tempPath);
@@ -73,7 +83,7 @@ sealed class TestDataDownloaderWindow : EditorWindow
 
         if (success)
         {
-            File.Move(tempPath, path);
+            File.Move(tempPath, destPath);
             AssetDatabase.Refresh();
         }
         else
@@ -85,3 +95,5 @@ sealed class TestDataDownloaderWindow : EditorWindow
         Repaint();
     }
 }
+
+} // namespace TestDataDownloader

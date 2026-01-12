@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "TestDataList", menuName = "Klak/Hap/Test Data List")]
-public sealed class TestDataList : ScriptableObject
+namespace TestDataDownloader {
+
+[CreateAssetMenu(fileName = "Dataset", menuName = "Klak/Hap/Test Dataset")]
+public sealed class Dataset : ScriptableObject
 {
     [field:SerializeField] public string[] SourceUrls { get; private set; }
 
@@ -14,11 +16,13 @@ public sealed class TestDataList : ScriptableObject
         var missingList = new List<string>();
         foreach (var url in SourceUrls)
         {
-            var filename = TestDataUtils.UrlToFilename(url);
+            var filename = FileUtils.UrlToFilename(url);
             if (filename == null) continue;
-            var destPath = TestDataUtils.GetDestinationPath(filename);
+            var destPath = FileUtils.GetDestinationPath(filename);
             if (!File.Exists(destPath)) missingList.Add(url);
         }
         return missingList.ToArray();
     }
 }
+
+} // namespace TestDataDownloader
