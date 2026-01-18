@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5acc6266be6eb4130afc5134ec35fcec, type: 3}
+  m_Name: Manifest
+  m_EditorClassIdentifier: KlutterTools.Editor::KlutterTools.Downloader.Manifest
+  <Caption>k__BackingField: 'Test video files are missing:'
+  <FileEntries>k__BackingField:
+  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/beeple_cleanroom_fhd_hap.mov
+    <Destination>k__BackingField: Assets/StreamingAssets
+  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/beeple_fiber_optical_fhd_hap.mov
+    <Destination>k__BackingField: Assets/StreamingAssets
+  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/HapAlphaTest-FHD-60fps.mov
+    <Destination>k__BackingField: Assets/StreamingAssets

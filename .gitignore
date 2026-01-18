@@ -17,8 +17,9 @@ Desktop.ini
 /Library
 /Logs
 /Recordings
-/UserSettings
 /Temp
+/UIElementsSchema
+/UserSettings
 
 # Visual Studio
 /Plugin/Windows/.vs
@@ -32,3 +33,6 @@ xcshareddata
 /Plugin/MacOS/x86_64
 /Plugin/MacOS/*.bundle
 /*.tgz
+
+/Assets/StreamingAssets/*.mov
+/Assets/StreamingAssets/*.mov.meta

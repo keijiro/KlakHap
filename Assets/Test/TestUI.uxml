@@ -1,0 +1,7 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Slider name="seek-bar" data-source-type="SeekBarBind, Assembly-CSharp">
+        <Bindings>
+            <ui:DataBinding property="value" data-source-path="SeekPoint" binding-mode="TwoWay"/>
+        </Bindings>
+    </ui:Slider>
+</ui:UXML>
