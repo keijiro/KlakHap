@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: KlutterTools.Editor::KlutterTools.Downloader.Manifest
   <Caption>k__BackingField: 'Test video files are missing:'
   <FileEntries>k__BackingField:
-  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/beeple_cleanroom_fhd_hap.mov
+  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/Beeple-CleanRoom-Hap.mov
     <Destination>k__BackingField: Assets/StreamingAssets
-  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/beeple_fiber_optical_fhd_hap.mov
+  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/Beeple-FiberOptical-Hap.mov
     <Destination>k__BackingField: Assets/StreamingAssets
-  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/HapAlphaTest-FHD-60fps.mov
+  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/Beeple-Hexxx-HapQ.mov
+    <Destination>k__BackingField: Assets/StreamingAssets
+  - <SourceUrl>k__BackingField: https://huggingface.co/keijiro-tk/test-videos/resolve/main/TransparencyTest-HapAlpha.mov
     <Destination>k__BackingField: Assets/StreamingAssets
