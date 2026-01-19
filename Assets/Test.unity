@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 11714849}
   - component: {fileID: 11714848}
   m_Layer: 0
-  m_Name: Quad (1)
+  m_Name: Quad
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -220,7 +220,7 @@ GameObject:
   - component: {fileID: 28633265}
   - component: {fileID: 28633264}
   m_Layer: 0
-  m_Name: HAP Player (Alpha)
+  m_Name: Player (HAP Alpha)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -351,7 +351,7 @@ Transform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 246925888}
   m_LocalEulerAnglesHint: {x: 30, y: 0, z: 30}
 --- !u!114 &201439702
 MonoBehaviour:
@@ -385,7 +385,7 @@ GameObject:
   - component: {fileID: 246925889}
   - component: {fileID: 246925890}
   m_Layer: 0
-  m_Name: HAP Player
+  m_Name: Player (HAP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -405,6 +405,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 327780397}
+  - {fileID: 201439700}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &246925889
@@ -452,7 +453,7 @@ GameObject:
   - component: {fileID: 327780396}
   - component: {fileID: 327780395}
   m_Layer: 0
-  m_Name: Quad
+  m_Name: Backdrop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -541,7 +542,7 @@ GameObject:
   - component: {fileID: 395240109}
   - component: {fileID: 395240108}
   m_Layer: 0
-  m_Name: Hap Player (HapQ)
+  m_Name: Player (HAP Q)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -863,6 +864,5 @@ SceneRoots:
   - {fileID: 1940121733}
   - {fileID: 1585188257}
   - {fileID: 246925888}
-  - {fileID: 201439700}
   - {fileID: 28633265}
   - {fileID: 395240109}
