@@ -4,4 +4,5 @@
             <ui:DataBinding property="value" data-source-path="SeekPoint" binding-mode="TwoWay"/>
         </Bindings>
     </ui:Slider>
+    <ui:VisualElement style="position: absolute; left: 10px; bottom: 10px; width: 160px; height: 90px; background-image: url(&quot;project://database/Assets/Test/ScriptingTest.renderTexture?fileID=8400000&amp;guid=1bba849debc024a4f8251bd62cceac60&amp;type=2#ScriptingTest&quot;);"/>
 </ui:UXML>
