@@ -4,7 +4,7 @@
     "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.timeline": "1.8.10",
     "jp.keijiro.klak.motion": "1.1.1",
-    "jp.keijiro.klutter-tools": "2.5.0",
+    "jp.keijiro.klutter-tools": "2.6.0",
     "com.unity.modules.uielements": "1.0.0"
   },
   "scopedRegistries": [
