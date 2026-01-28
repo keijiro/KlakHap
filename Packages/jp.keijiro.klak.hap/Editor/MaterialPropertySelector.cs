@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
@@ -70,12 +71,12 @@ namespace Klak.Hap
 
             var temp = new List<string>();
 
-            var count = ShaderUtil.GetPropertyCount(shader);
+            var count = shader.GetPropertyCount();
             for (var i = 0; i < count; i++)
             {
-                var propType = ShaderUtil.GetPropertyType(shader, i);
-                if (propType == ShaderUtil.ShaderPropertyType.TexEnv)
-                    temp.Add(ShaderUtil.GetPropertyName(shader, i));
+                var propType = shader.GetPropertyType(i);
+                if (propType == ShaderPropertyType.Texture)
+                    temp.Add(shader.GetPropertyName(i));
             }
 
             _propertyNames = temp.ToArray();
