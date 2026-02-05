@@ -36,7 +36,7 @@ supported.
 KlakHap only supports the QuickTime File Format as a container, i.e., `.mov`
 files.
 
-# How to Install
+# How to install
 
 Install the KlakHap package (`jp.keijiro.klak.hap`) from the "Keijiro" scoped
 registry in Package Manager. Follow [these instructions] to add the registry to
