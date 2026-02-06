@@ -20,6 +20,7 @@ Shader "Klak/HAP Q"
     {
         float4 position : SV_Position;
         float2 texcoord : TEXCOORD;
+        UNITY_VERTEX_OUTPUT_STEREO
     };
 
     sampler2D _MainTex;
@@ -43,6 +44,7 @@ Shader "Klak/HAP Q"
     {
         UNITY_SETUP_INSTANCE_ID(input);
         Varyings output;
+        UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
         output.position = UnityObjectToClipPos(input.position);
         output.texcoord = TRANSFORM_TEX(input.texcoord, _MainTex);
         output.texcoord.y = 1 - output.texcoord.y;
