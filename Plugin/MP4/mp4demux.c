@@ -6,9 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <limits.h>     // LONG_MAX
 #include <sys/types.h>  // struct stat
 #include <sys/stat.h>   // fstat       - for file size
+
+#if defined(_WIN32)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 /************************************************************************/
 /*      Build config                                                    */
@@ -34,21 +39,39 @@ typedef enum {BOX_ATOM, BOX_OD} mp4d_boxtype_t;
 /*      File input (non-portable) stuff                                 */
 /************************************************************************/
 
+static int mp4d_fseek_abs(FILE * f, mp4d_size_t offset)
+{
+#if defined(_WIN32)
+    return _fseeki64(f, (__int64)offset, SEEK_SET);
+#else
+    return fseeko(f, (off_t)offset, SEEK_SET);
+#endif
+}
+
+static int mp4d_fseek_rel(FILE * f, mp4d_size_t offset)
+{
+#if defined(_WIN32)
+    return _fseeki64(f, (__int64)offset, SEEK_CUR);
+#else
+    return fseeko(f, (off_t)offset, SEEK_CUR);
+#endif
+}
+
 /**
 *   Return 64-bit file size in most portable way
 */
-static off_t mp4d_fsize(FILE * f) 
+static mp4d_size_t mp4d_fsize(FILE * f)
 {
-    struct stat st;
-#ifdef _MSC_VER
-    if (fstat(_fileno(f), &st) == 0)
+#if defined(_WIN32)
+    struct _stat64 st;
+    if (_fstat64(_fileno(f), &st) == 0)
+        return (mp4d_size_t)st.st_size;
 #else
+    struct stat st;
     if (fstat(fileno(f), &st) == 0)
+        return (mp4d_size_t)st.st_size;
 #endif
-    {
-        return st.st_size;
-    }
-    return -1;
+    return (mp4d_size_t)-1;
 }
 
 /**
@@ -94,16 +117,11 @@ static uint32_t mp4d_read_payload(FILE * f, unsigned nb, mp4d_size_t * payload_b
 */
 static void mp4d_skip_bytes(FILE * f, mp4d_size_t skip, int * eof_flag)
 {
-    while (skip > 0)
-    {
-        long lpos = (long)(skip < (mp4d_size_t)LONG_MAX ? skip : LONG_MAX);
-        if (fseek(f, lpos, SEEK_CUR))
-        {
-            *eof_flag = 1;
-            return;
-        }
-        skip -= lpos;
-    }
+    if (skip == 0)
+        return;
+
+    if (mp4d_fseek_rel(f, skip))
+        *eof_flag = 1;
 }
 
 
@@ -117,7 +135,7 @@ static void mp4d_skip_bytes(FILE * f, mp4d_size_t skip, int * eof_flag)
 */
 #define MP4D_RETURN_ERROR(mess) {       \
     MP4D_TRACE(("\nMP4 ERROR: " mess)); \
-    fseek(f, 0, SEEK_SET);              \
+    mp4d_fseek_abs(f, 0);               \
     MP4D__close(mp4);                   \
     return 0;                           \
 }
@@ -155,7 +173,7 @@ int MP4D__open(MP4D_demux_t * mp4, FILE * f)
 
     } stack[MP4D_MAX_CHUNKS_DEPTH];
 
-    off_t file_size = mp4d_fsize(f);
+    mp4d_size_t file_size = mp4d_fsize(f);
     int eof_flag = 0;
     unsigned i;
     MP4D_track_t * tr = NULL;
@@ -172,7 +190,7 @@ int MP4D__open(MP4D_demux_t * mp4, FILE * f)
         return 0;
     }
 
-    if (fseek(f, 0, SEEK_SET))  // some platforms missing rewind()
+    if (mp4d_fseek_abs(f, 0))  // some platforms missing rewind()
     {
         return 0;
     }
@@ -589,7 +607,7 @@ int MP4D__open(MP4D_demux_t * mp4, FILE * f)
                 unsigned int AVCProfileIndication = READ(1);
                 unsigned int profile_compatibility = READ(1);
                 unsigned int AVCLevelIndication = READ(1);
-                //bit(6) reserved = ‘111111’b;
+                //bit(6) reserved = '111111'b;
                 unsigned int lengthSizeMinusOne = READ(1) & 3;
                 
                 (void)configurationVersion;
@@ -734,7 +752,7 @@ int MP4D__open(MP4D_demux_t * mp4, FILE * f)
     {
         MP4D_RETURN_ERROR("no tracks found");
     }
-    fseek(f, 0, SEEK_SET);
+    mp4d_fseek_abs(f, 0);
     return 1;
 }
 
@@ -1148,7 +1166,7 @@ static void save_track_data(const MP4D_demux_t * mp4_demux, FILE * mp4_file, uns
 
         // save payload
         frame_mem = malloc(frame_bytes);
-        fseek(mp4_file, (long)frame_ofs, SEEK_SET);
+        mp4d_fseek_abs(mp4_file, frame_ofs);
         fread(frame_mem, 1, frame_bytes, mp4_file);
 
         if (mp4_demux->track[ntrack].object_type_indication == MP4_OBJECT_TYPE_AVC)

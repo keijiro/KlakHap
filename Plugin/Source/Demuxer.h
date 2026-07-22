@@ -78,7 +78,11 @@ namespace KlakHap
 
             // Read to a temporary buffer.
             uint8_t temp;
-            fseek(file_, (long)offs + 3, SEEK_SET);
+        #if defined(_WIN32)
+            _fseeki64(file_, (__int64)offs + 3, SEEK_SET);
+        #else
+            fseeko(file_, (off_t)offs + 3, SEEK_SET);
+        #endif
             fread(&temp, 1, 1, file_);
 
             return temp;
@@ -92,9 +96,9 @@ namespace KlakHap
 
             // Frame data read
         #if defined(_WIN32)
-            _fseeki64(file_, inOffs, SEEK_SET);
+            _fseeki64(file_, (__int64)inOffs, SEEK_SET);
         #else
-            fseek(file_, inOffs, SEEK_SET);
+            fseeko(file_, (off_t)inOffs, SEEK_SET);
         #endif
             buffer.storage.resize(inSize);
             fread(buffer.storage.data(), inSize, 1, file_);

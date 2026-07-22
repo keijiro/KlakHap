@@ -3,9 +3,17 @@ ARCH = x86_64
 TARGET_TYPE = dll
 
 TOOLCHAIN = $(ARCH)-w64-mingw32
+# Linux/macOS cross-builds use the *-posix MinGW compilers; native MSYS2/MinGW on
+# Windows only provides names without the -posix suffix.
+ifeq ($(OS),Windows_NT)
+CC = $(TOOLCHAIN)-gcc
+CXX = $(TOOLCHAIN)-g++
+STRIP = strip
+else
 CC = $(TOOLCHAIN)-gcc-posix
 CXX = $(TOOLCHAIN)-g++-posix
 STRIP = $(TOOLCHAIN)-strip
+endif
 
 LDFLAGS = -shared
 LIBS = -static -Wl,--subsystem,windows

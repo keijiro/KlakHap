@@ -74,7 +74,11 @@ clean:
 	rm -f $(TARGET) $(OBJS)
 
 copy: $(TARGET)
+ifeq ($(OS),Windows_NT)
+	powershell -NoProfile -Command "Copy-Item -LiteralPath '$(TARGET)' -Destination '../Packages/jp.keijiro.klak.hap/Plugin/$(PLATFORM)/' -Force"
+else
 	cp $(TARGET) ../Packages/jp.keijiro.klak.hap/Plugin/$(PLATFORM)
+endif
 
 $(OBJ_DIR)/$(PRODUCT).dll: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)

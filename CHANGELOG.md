@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed playback of HAP videos larger than 2 GB on Windows by using 64-bit file
+  seeking when demuxing QuickTime/MP4 containers.
+- Fixed Windows file locks sticking in the Editor: HapPlayer now releases the
+  native demuxer after play mode and after a short idle period when time
+  scrubbing stops, while keeping the last preview frame.
+
+### Changed
+
+- Updated the Windows Makefile so native MSYS2/MinGW builds work without the
+  Linux-style `*-posix` cross-compiler tool names.
+
 ## [1.0.0] - 2026-02-05
 
 ### Added
