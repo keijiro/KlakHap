@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Fixed playback of HAP videos larger than 2 GB on Windows by using 64-bit file
   seeking when demuxing QuickTime/MP4 containers.
+- Fixed Windows file locks sticking in the Editor: HapPlayer now releases the
+  native demuxer after play mode and after a short idle period when time
+  scrubbing stops, while keeping the last preview frame.
 
 ### Changed
 

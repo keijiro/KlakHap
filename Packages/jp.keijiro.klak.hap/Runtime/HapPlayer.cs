@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -67,15 +68,19 @@ namespace Klak.Hap
 
         #region Read-only properties
 
-        public bool isValid { get { return _demuxer != null; } }
-        public int frameWidth { get { return _demuxer?.Width ?? 0; } }
-        public int frameHeight { get { return _demuxer?.Height ?? 0; } }
-        public int frameCount { get { return _demuxer?.FrameCount ?? 0; } }
-        public double streamDuration { get { return _demuxer?.Duration ?? 0; } }
+        // True after a successful open for the current path. Stays true while
+        // the demuxer is temporarily released in the editor (idle file unlock).
+        public bool isValid { get { return _hasSource; } }
+        public bool isStreamOpen { get { return _demuxer != null; } }
 
-        public CodecType codecType { get {
-            return Utility.DetermineCodecType(_demuxer?.VideoType ?? 0);
-        } }
+        public int frameWidth { get { return _width; } }
+        public int frameHeight { get { return _height; } }
+        public int frameCount { get { return _frameCount; } }
+        public double streamDuration { get { return _duration; } }
+
+        public CodecType codecType {
+            get { return Utility.DetermineCodecType(_videoType); }
+        }
 
         public string resolvedFilePath { get {
             if (_pathMode == PathMode.StreamingAssets)
@@ -100,12 +105,58 @@ namespace Klak.Hap
 
             _filePath = filePath;
             _pathMode = pathMode;
+            _suppressEditModeAutoOpen = false;
 
             OpenInternal();
         }
 
         public void UpdateNow()
-          => LateUpdate();
+        {
+            // Scrubbing / forced preview must be allowed to reopen after idle unlock.
+            _suppressEditModeAutoOpen = false;
+            LateUpdate();
+        }
+
+        // Closes the native demuxer (and reader/decoder) so Windows can
+        // overwrite the movie file, while keeping the last decoded preview.
+        public void ReleaseFileLock()
+        {
+            if (_updater != null)
+            {
+                _updater.Dispose();
+                _updater = null;
+            }
+
+            if (_decoder != null)
+            {
+                _decoder.Dispose();
+                _decoder = null;
+            }
+
+            if (_stream != null)
+            {
+                _stream.Dispose();
+                _stream = null;
+            }
+
+            if (_demuxer != null)
+            {
+                _demuxer.Dispose();
+                _demuxer = null;
+            }
+
+            // In edit mode, stay closed until time is scrubbed again.
+            if (!Application.isPlaying)
+                _suppressEditModeAutoOpen = true;
+        }
+
+        #endregion
+
+        #region Internal editor support
+
+        static readonly HashSet<HapPlayer> _instances = new HashSet<HapPlayer>();
+
+        public static IReadOnlyCollection<HapPlayer> Instances => _instances;
 
         #endregion
 
@@ -120,6 +171,16 @@ namespace Klak.Hap
 
         float _storedTime;
         float _storedSpeed;
+
+        bool _hasSource;
+        int _width;
+        int _height;
+        int _frameCount;
+        int _videoType;
+        double _duration;
+
+        // After an idle unlock in edit mode, don't reopen every LateUpdate.
+        bool _suppressEditModeAutoOpen;
 
         void OpenInternal()
         {
@@ -137,8 +198,18 @@ namespace Klak.Hap
                 }
                 _demuxer.Dispose();
                 _demuxer = null;
+                _hasSource = false;
+                _width = _height = _frameCount = _videoType = 0;
+                _duration = 0;
                 return;
             }
+
+            _width = _demuxer.Width;
+            _height = _demuxer.Height;
+            _frameCount = _demuxer.FrameCount;
+            _duration = _demuxer.Duration;
+            _videoType = _demuxer.VideoType;
+            _hasSource = true;
 
             // Stream reader instantiation
             _stream = new StreamReader(_demuxer, _time, _speed / 60);
@@ -146,18 +217,29 @@ namespace Klak.Hap
 
             // Decoder instantiation
             _decoder = new Decoder(
-                _stream, _demuxer.Width, _demuxer.Height, _demuxer.VideoType
+                _stream, _width, _height, _videoType
             );
 
-            // Texture initialization
-            _texture = new Texture2D(
-                _demuxer.Width, _demuxer.Height,
-                Utility.DetermineTextureFormat(_demuxer.VideoType), false
-            );
-            _texture.wrapMode = TextureWrapMode.Clamp;
-            _texture.hideFlags = HideFlags.DontSave;
+            // Texture initialization (reuse when scrub-reopening the same size)
+            var format = Utility.DetermineTextureFormat(_videoType);
+            if (_texture != null &&
+                (_texture.width != _width ||
+                 _texture.height != _height ||
+                 _texture.format != format))
+            {
+                Utility.Destroy(_texture);
+                _texture = null;
+            }
+
+            if (_texture == null)
+            {
+                _texture = new Texture2D(_width, _height, format, false);
+                _texture.wrapMode = TextureWrapMode.Clamp;
+                _texture.hideFlags = HideFlags.DontSave;
+            }
 
             _updater = new TextureUpdater(_texture, _decoder);
+            _suppressEditModeAutoOpen = false;
         }
 
         #endregion
@@ -169,12 +251,12 @@ namespace Klak.Hap
 
         void UpdateTargetTexture()
         {
-            if (_targetTexture == null) return;
+            if (_targetTexture == null || _texture == null) return;
 
             // Material lazy initialization
             if (_blitMaterial == null)
             {
-                _blitMaterial = new Material(Utility.DetermineBlitShader(_demuxer.VideoType));
+                _blitMaterial = new Material(Utility.DetermineBlitShader(_videoType));
                 _blitMaterial.hideFlags = HideFlags.DontSave;
             }
 
@@ -184,7 +266,7 @@ namespace Klak.Hap
 
         void UpdateTargetRenderer()
         {
-            if (_targetRenderer == null) return;
+            if (_targetRenderer == null || _texture == null) return;
 
             // Material property block lazy initialization
             if (_propertyBlock == null)
@@ -222,6 +304,7 @@ namespace Klak.Hap
         {
             _time = (float)time;
             _speed = 1;
+            _suppressEditModeAutoOpen = false;
         }
 
         #endregion
@@ -239,34 +322,37 @@ namespace Klak.Hap
 
         #region MonoBehaviour implementation
 
+        void OnEnable()
+        {
+            _instances.Add(this);
+        }
+
+        void OnDisable()
+        {
+            _instances.Remove(this);
+
+            // Drop the native file handle when leaving play mode / disabling
+            // in the editor. Play mode entry also hits this; LateUpdate reopens.
+            if (!Application.isPlaying)
+                ReleaseFileLock();
+        }
+
         void OnDestroy()
         {
-            if (_updater != null)
-            {
-                _updater.Dispose();
-                _updater = null;
-            }
+            ReleaseFileLock();
 
-            if (_decoder != null)
-            {
-                _decoder.Dispose();
-                _decoder = null;
-            }
+            // Allow LateUpdate to reopen after inspector path reloads, which
+            // force-invoke OnDestroy then LateUpdate.
+            _suppressEditModeAutoOpen = false;
 
-            if (_stream != null)
-            {
-                _stream.Dispose();
-                _stream = null;
-            }
-
-            if (_demuxer != null)
-            {
-                _demuxer.Dispose();
-                _demuxer = null;
-            }
+            _hasSource = false;
+            _width = _height = _frameCount = _videoType = 0;
+            _duration = 0;
 
             Utility.Destroy(_texture);
             Utility.Destroy(_blitMaterial);
+            _texture = null;
+            _blitMaterial = null;
         }
 
         int _lastUpdateFrameCount = -1;
@@ -279,16 +365,19 @@ namespace Klak.Hap
 
             // Lazy initialization of demuxer
             if (_demuxer == null && !string.IsNullOrEmpty(_filePath))
-                OpenInternal();
+            {
+                if (Application.isPlaying || !_suppressEditModeAutoOpen)
+                    OpenInternal();
+            }
 
             // Do nothing if the demuxer hasn't been instantiated.
             if (_demuxer == null) return;
 
-            var duration = (float)_demuxer.Duration;
+            var duration = (float)_duration;
 
             // Check if _time is still in the same frame of _storedTime.
             // Resync is needed when it went out of the frame.
-            var dt = duration / _demuxer.FrameCount;
+            var dt = duration / _frameCount;
             var resync = _time < _storedTime || _time > _storedTime + dt;
 
             // Check if the speed was externally modified.
