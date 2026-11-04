@@ -58,9 +58,12 @@ namespace Klak.Hap
         public void UpdateSync(float time)
         {
             _time = time;
-            var buffer = _stream.Advance(_time);
-            if (buffer != null)
-                KlakHap_DecodeFrame(_plugin, buffer.PluginPointer);
+            lock (_decodeLock)
+            {
+                var buffer = _stream.Advance(_time);
+                if (buffer != null)
+                    KlakHap_DecodeFrame(_plugin, buffer.PluginPointer);
+            }
         }
 
         public void UpdateAsync(float time)
@@ -96,6 +99,12 @@ namespace Klak.Hap
         StreamReader _stream;
         float _time;
 
+        // Serializes Advance + DecodeFrame between UpdateSync (main thread)
+        // and the decoder thread. UpdateAsync returns on ack, before the
+        // decoder thread decodes, so a resync right after could otherwise
+        // recycle the buffer that is still being decoded.
+        readonly object _decodeLock = new object();
+
         #endregion
 
         #region Thread function
@@ -109,10 +118,13 @@ namespace Klak.Hap
 
                 if (_terminate) break;
 
-                var buffer = _stream.Advance(_time);
-                if (buffer == null) continue;
+                lock (_decodeLock)
+                {
+                    var buffer = _stream.Advance(_time);
+                    if (buffer == null) continue;
 
-                KlakHap_DecodeFrame(_plugin, buffer.PluginPointer);
+                    KlakHap_DecodeFrame(_plugin, buffer.PluginPointer);
+                }
             }
         }
 
